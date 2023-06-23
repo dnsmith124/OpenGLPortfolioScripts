@@ -10,7 +10,7 @@ public class PlayerController : MonoBehaviour
         Idling,
         Walking,
         Attacking,
-        Casting
+        AttackOne
     }
 
     public State state;
@@ -20,7 +20,7 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Determines how fast the player rotates to the target of a spell cast when pressed.")]
     public float spellCastRotationSpeed = 10f;
     [Tooltip("How long to wait during the casting animation before the projectile is initialized. Seconds.")]
-    public float spellCastAnimOffsetTime = 0.25f;
+    public float spellCastAnimOffsetTime = 0.4f;
 
     private bool canMove = true;
     private bool spellCooldown = false;
@@ -49,17 +49,25 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        if(Input.GetButtonDown("Fire2") && state != State.Casting)
+        if(Input.GetButtonDown("Fire2"))
         {
+            Debug.Log("Right Click");
+            if (spellCooldown)
+            {
+                Debug.Log("Spell is being cast");
+                return;
+            }
+
             lastSpellTarget = GetMousePositionFromRayCast();
             agent.ResetPath();
-            state = State.Casting;
+            state = State.AttackOne;
             return;
         }
 
 
-        if (Input.GetButtonDown("Fire1"))
+        if (Input.GetButton("Fire1"))
         {
+            Debug.Log("Left Click");
             RaycastHit hit = GetMousePositionFromRayCast();
             agent.destination = hit.point;
             targetPoint = hit.point;
@@ -75,9 +83,10 @@ public class PlayerController : MonoBehaviour
                 HandleWalking();
                 break;
 
-            case State.Casting:
-                if(!spellCooldown)
-                    HandleCasting();
+            case State.AttackOne:
+                if (spellCooldown)
+                    return;
+                HandleAttackOne();
                 break;
 
             case State.Attacking:
@@ -143,29 +152,15 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void HandleCasting()
+    private void HandleAttackOne()
     {
         spellCooldown = true;
-        StartCoroutine(RotateAndCastSpell(lastSpellTarget, spellCastRotationSpeed, "Casting", spellCastAnimOffsetTime));
+        StartCoroutine(RotateAndCastSpell(lastSpellTarget, spellCastRotationSpeed, "AttackOne", spellCastAnimOffsetTime));
     }
 
     private void HandleAttacking()
     {
 
-    }
-
-    private Quaternion RotateTowards(RaycastHit hit, float rotationSpeed)
-    {
-        // Find the vector pointing from the GameObject to the hit point
-        Vector3 directionToHit = hit.point - transform.position;
-
-        // Create a rotation that looks along that vector
-        Quaternion targetRotation = Quaternion.LookRotation(directionToHit);
-
-        // Smoothly rotate the GameObject towards the target rotation
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-
-        return targetRotation;
     }
 
     private IEnumerator RotateAndCastSpell(RaycastHit targetHit, float rotationSpeed, string triggerName, float animOffsetTime)
@@ -175,20 +170,26 @@ public class PlayerController : MonoBehaviour
 
         Quaternion targetRotation = Quaternion.LookRotation(targetPoint - transform.position);
 
-        while (Quaternion.Angle(transform.rotation, targetRotation) > 5f)
+        // rotate until we're within 3 degrees of the target
+        while (Quaternion.Angle(transform.rotation, targetRotation) > 3f)
         {
-            RotateTowards(targetHit, rotationSpeed);
-            //transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
             Debug.Log(Quaternion.Angle(transform.rotation, targetRotation));
+            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
             yield return null;
         }
 
         // Trigger the animation
         animator.SetTrigger(triggerName);
 
+        // get the length of the triggered animation
+        float animationLength = AnimationUtils.GetAnimationClipLength(animator, triggerName);
+
         // Wait for the specified time in the animation to cast the spell.
         yield return new WaitForSeconds(animOffsetTime);
         playerSpellCasting.CastSpell();
+
+        // Wait for the animation to finish
+        yield return new WaitForSeconds(animationLength - animOffsetTime);
 
         // Set state to Idling and cooldown to false
         state = State.Idling;
