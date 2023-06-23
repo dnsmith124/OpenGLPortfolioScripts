@@ -9,14 +9,6 @@ public class PlayerSpellCasting : MonoBehaviour
     [Tooltip("Determines the y coordinate for an instantiated spell prefab. An offset to the player's y coordinate;")]
     public float spellInstantiateHeightOffset = 1.0f;
 
-    //private void Update()
-    //{
-    //    if (Input.GetButtonDown("Fire2")) 
-    //    {
-    //        CastSpell();
-    //    }
-    //}
-
     public void CastSpell()
     {
         // Create a new spell instance
