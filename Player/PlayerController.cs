@@ -51,10 +51,8 @@ public class PlayerController : MonoBehaviour
 
         if(Input.GetButtonDown("Fire2"))
         {
-            Debug.Log("Right Click");
             if (spellCooldown)
             {
-                Debug.Log("Spell is being cast");
                 return;
             }
 
@@ -67,7 +65,6 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetButton("Fire1"))
         {
-            Debug.Log("Left Click");
             RaycastHit hit = GetMousePositionFromRayCast();
             agent.destination = hit.point;
             targetPoint = hit.point;
@@ -173,7 +170,6 @@ public class PlayerController : MonoBehaviour
         // rotate until we're within 3 degrees of the target
         while (Quaternion.Angle(transform.rotation, targetRotation) > 3f)
         {
-            Debug.Log(Quaternion.Angle(transform.rotation, targetRotation));
             transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
             yield return null;
         }
