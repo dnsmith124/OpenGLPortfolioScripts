@@ -9,7 +9,7 @@ public class PlayerSpellCasting : MonoBehaviour
     [Tooltip("Determines the y coordinate for an instantiated spell prefab. An offset to the player's y coordinate;")]
     public float spellInstantiateHeightOffset = 1.0f;
 
-    public void CastSpell()
+    public void CastSpell(Vector3 targetDirection)
     {
         // Create a new spell instance
         Rigidbody spellInstance;
@@ -19,17 +19,9 @@ public class PlayerSpellCasting : MonoBehaviour
         Vector3 adjustedTransformPosition = new Vector3(transform.position.x, relativeYCoordinate, transform.position.z);
         spellInstance = Instantiate(spellPrefab, adjustedTransformPosition, transform.rotation);
 
-        // Get the direction from the player to the mouse cursor
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-        if (Physics.Raycast(ray, out hit, 100f)) 
-        {
-            // Calculate the direction from the player to the hit point
-            Vector3 direction = hit.point - transform.position;
-            direction.Normalize();
+        targetDirection.Normalize();
 
-            // Shoot the spell in the direction of the hit point
-            spellInstance.velocity = direction * spellSpeed;
-        }
+        // Shoot the spell in the direction of the hit point
+        spellInstance.velocity = targetDirection * spellSpeed;
     }
 }
