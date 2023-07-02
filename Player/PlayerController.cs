@@ -10,7 +10,8 @@ public class PlayerController : MonoBehaviour
         Idling,
         Walking,
         Attacking,
-        AttackOne
+        AttackOne,
+        AttackTwo
     }
 
     public State state;
@@ -20,7 +21,11 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Determines how fast the player rotates to the target of a spell cast when pressed.")]
     public float spellCastRotationSpeed = 10f;
     [Tooltip("How long to wait during the casting animation before the projectile is initialized. Seconds.")]
-    public float spellCastAnimOffsetTime = 0.4f;
+    public float projectileSpellCastAnimOffsetTime = 0.4f;
+    [Tooltip("How long to wait during the casting animation before the aoe is initialized. Seconds.")]
+    public float aoeSpellCastAnimOffsetTime = 0.25f;
+    public float aoeSpellRadius = 5f;
+    public int aoeSpellDamage = 10;
 
     private bool canMove = true;
     private bool spellCooldown = false;
@@ -66,6 +71,18 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        if (Input.GetButtonDown("Fire3"))
+        {
+            if (spellCooldown)
+            {
+                return;
+            }
+
+            agent.ResetPath();
+            state = State.AttackTwo;
+            return;
+        }
+
 
         if (Input.GetButton("Fire1"))
         {
@@ -88,6 +105,12 @@ public class PlayerController : MonoBehaviour
                 if (spellCooldown)
                     return;
                 HandleAttackOne();
+                break;
+
+            case State.AttackTwo:
+                if (spellCooldown)
+                    return;
+                HandleAttackTwo();
                 break;
 
             case State.Attacking:
@@ -156,7 +179,13 @@ public class PlayerController : MonoBehaviour
     private void HandleAttackOne()
     {
         spellCooldown = true;
-        StartCoroutine(RotateAndCastSpell(lastSpellTarget, spellCastRotationSpeed, "AttackOne", spellCastAnimOffsetTime));
+        StartCoroutine(RotateAndCastProjectileSpell(lastSpellTarget, spellCastRotationSpeed, "AttackOne", projectileSpellCastAnimOffsetTime));
+    }
+
+    private void HandleAttackTwo()
+    {
+        spellCooldown = true;
+        StartCoroutine(castAoeSpell("AttackTwo", projectileSpellCastAnimOffsetTime));
     }
 
     private void HandleAttacking()
@@ -164,7 +193,28 @@ public class PlayerController : MonoBehaviour
 
     }
 
-    private IEnumerator RotateAndCastSpell(RaycastHit targetHit, float rotationSpeed, string triggerName, float animOffsetTime)
+    private IEnumerator castAoeSpell(string triggerName, float animOffsetTime)
+    {
+
+        // Trigger the animation
+        animator.SetTrigger(triggerName);
+
+        // get the length of the triggered animation
+        float animationLength = AnimationUtils.GetAnimationClipLength(animator, triggerName);
+
+        // Wait for the specified time in the animation to cast the spell.
+        yield return new WaitForSeconds(animOffsetTime);
+        playerSpellCasting.CastAoeSpell(transform.position, aoeSpellRadius, aoeSpellDamage);
+
+        // Wait for the animation to finish
+        yield return new WaitForSeconds(animationLength - animOffsetTime);
+
+        // Set state to Idling and cooldown to false
+        state = State.Idling;
+        spellCooldown = false;
+    }
+
+    private IEnumerator RotateAndCastProjectileSpell(RaycastHit targetHit, float rotationSpeed, string triggerName, float animOffsetTime)
     {
         // Find the vector pointing from the GameObject to the hit point
         Vector3 targetDirection = targetHit.point - transform.position;
@@ -186,7 +236,7 @@ public class PlayerController : MonoBehaviour
 
         // Wait for the specified time in the animation to cast the spell.
         yield return new WaitForSeconds(animOffsetTime);
-        playerSpellCasting.CastSpell(targetDirection);
+        playerSpellCasting.CastProjectileSpell(targetDirection);
 
         // Wait for the animation to finish
         yield return new WaitForSeconds(animationLength - animOffsetTime);
