@@ -51,14 +51,16 @@ public class PlayerController : MonoBehaviour
 
         if(Input.GetButtonDown("Fire2"))
         {
-            Debug.Log("Right Click");
             if (spellCooldown)
             {
-                Debug.Log("Spell is being cast");
                 return;
             }
 
-            lastSpellTarget = GetMousePositionFromRayCast();
+            RaycastHit newSpellTarget = GetMousePositionFromRayCast();
+            if (newSpellTarget.collider.gameObject.tag == "NPC")
+                return;
+
+            lastSpellTarget = newSpellTarget;
             agent.ResetPath();
             state = State.AttackOne;
             return;
@@ -67,7 +69,6 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetButton("Fire1"))
         {
-            Debug.Log("Left Click");
             RaycastHit hit = GetMousePositionFromRayCast();
             agent.destination = hit.point;
             targetPoint = hit.point;
@@ -166,14 +167,13 @@ public class PlayerController : MonoBehaviour
     private IEnumerator RotateAndCastSpell(RaycastHit targetHit, float rotationSpeed, string triggerName, float animOffsetTime)
     {
         // Find the vector pointing from the GameObject to the hit point
-        Vector3 targetPoint = targetHit.point - transform.position;
+        Vector3 targetDirection = targetHit.point - transform.position;
 
-        Quaternion targetRotation = Quaternion.LookRotation(targetPoint - transform.position);
+        Quaternion targetRotation = Quaternion.LookRotation(targetDirection - transform.position);
 
         // rotate until we're within 3 degrees of the target
         while (Quaternion.Angle(transform.rotation, targetRotation) > 3f)
         {
-            Debug.Log(Quaternion.Angle(transform.rotation, targetRotation));
             transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
             yield return null;
         }
@@ -186,7 +186,7 @@ public class PlayerController : MonoBehaviour
 
         // Wait for the specified time in the animation to cast the spell.
         yield return new WaitForSeconds(animOffsetTime);
-        playerSpellCasting.CastSpell();
+        playerSpellCasting.CastSpell(targetDirection);
 
         // Wait for the animation to finish
         yield return new WaitForSeconds(animationLength - animOffsetTime);
