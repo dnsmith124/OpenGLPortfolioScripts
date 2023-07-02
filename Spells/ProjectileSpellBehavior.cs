@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-public class SpellBehavior : MonoBehaviour
+public class ProjectileSpellBehavior : MonoBehaviour
 {
     public float maxTravelDistance = 50f; // Maximum travel distance
     public float disappearDelay = 2f; // Delay before disappearing after collision
