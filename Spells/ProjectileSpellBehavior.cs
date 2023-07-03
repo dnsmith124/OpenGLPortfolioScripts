@@ -19,13 +19,9 @@ public class ProjectileSpellBehavior : MonoBehaviour
     SphereCollider projectileCollider;
     public Rigidbody projectileRigidbody;
 
-    private Vector3 startingPosition;
 
     private void Start()
     {
-        // Save the starting position of the spell
-        startingPosition = transform.position;
-
         fXProjectileParticles = gameObject.GetComponent<ParticleSystem>();
         fXProjectileBaseParticles = gameObject.transform.GetChild(0).GetComponent<ParticleSystem>();
         fXProjectileTrailParticles = gameObject.transform.GetChild(1).GetComponent<ParticleSystem>();

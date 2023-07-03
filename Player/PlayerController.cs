@@ -219,10 +219,18 @@ public class PlayerController : MonoBehaviour
 
         Quaternion targetRotation = Quaternion.LookRotation(targetDirection - transform.position);
 
+        int cycles = 0;
+        
+
         // rotate until we're within 3 degrees of the target
-        while (Quaternion.Angle(transform.rotation, targetRotation) > 3f)
+        while (Quaternion.Angle(transform.rotation, targetRotation) > 5f )
         {
+            // break after a certain number of cycles have been reached (to prevent infinite wait here)
+            if (cycles > 150)
+                break;
+
             transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+            cycles++;
             yield return null;
         }
 

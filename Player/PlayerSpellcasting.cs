@@ -32,7 +32,7 @@ public class PlayerSpellCasting : MonoBehaviour
     public void CastAoeSpell (Vector3 center)
     {
         Collider[] hitColliders = Physics.OverlapSphere(center, aoeSpellRadius);
-        Instantiate(aoePrefab, transform);
+        Instantiate(aoePrefab, transform.position, transform.rotation);
         foreach (var hitCollider in hitColliders)
         {
             if (hitCollider.gameObject.GetComponent<EnemyAI>())
