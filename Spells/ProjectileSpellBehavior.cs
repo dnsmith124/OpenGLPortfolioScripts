@@ -4,10 +4,11 @@ public class ProjectileSpellBehavior : MonoBehaviour
 {
     public float maxTravelTime = 10f; // Maximum travel distance
     public float disappearDelay = 2f; // Delay before disappearing after collision
-    public int damage = 20;
     public float moveSpeed;
 
     public GameObject FXHit;
+
+    int damage = 20;
 
     ParticleSystem fXProjectileParticles;
     ParticleSystem fXProjectileBaseParticles;
@@ -34,9 +35,10 @@ public class ProjectileSpellBehavior : MonoBehaviour
         projectileRigidbody = gameObject.GetComponent<Rigidbody>();
     }
 
-    public void Setup(Vector3 projectileDir)
+    public void Setup(Vector3 projectileDir, int damage)
     {
         projectileRigidbody.velocity = projectileDir * moveSpeed;
+        this.damage = damage;
     }
 
     private void Update()

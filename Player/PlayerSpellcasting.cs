@@ -10,6 +10,7 @@ public class PlayerSpellCasting : MonoBehaviour
     public float spellInstantiateHeightOffset = 1.0f;
     public float aoeSpellRadius = 5f;
     public int aoeSpellDamage = 10;
+    public int projectileSpellDamage = 10;
 
 
     public void CastProjectileSpell(Vector3 targetDirection)
@@ -24,7 +25,7 @@ public class PlayerSpellCasting : MonoBehaviour
 
         targetDirection.Normalize();
 
-        spellInstance.GetComponent<ProjectileSpellBehavior>().Setup(targetDirection);
+        spellInstance.GetComponent<ProjectileSpellBehavior>().Setup(targetDirection, projectileSpellDamage);
 
     }
 
