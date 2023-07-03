@@ -7,13 +7,13 @@ This project is currently in development. My portfolio site will have a normal, 
 ## Feature Roadmap
 
 - [ ] Player stats
-- [ ] Player spells/attacks
 - [ ] Enemy spells/attacks
 - [ ] Slain enemies drop loot
 - [ ] Player inventory/items
 - [ ] Final boss battle
 - [ ] Updated environments
 - [ ] Portfolio details
+- [x] Player spells/attacks
 - [x] User directed branching dialogue
 - [x] Walk & idle animations for NPCs, enemies and the player
 - [x] Basic enemy chase AI
