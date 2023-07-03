@@ -36,8 +36,8 @@ public class DialogueManager : MonoBehaviour
 
         dialogueUI = gameObject;
         dialogueCanvasGroup = dialogueUI.GetComponent<CanvasGroup>();
-        dialogueCanvasGroup.alpha = 0f; // Start invisible
-        dialogueCanvasGroup.interactable = false; // Start non-interactable
+        dialogueCanvasGroup.alpha = 0f; 
+        dialogueCanvasGroup.interactable = false; 
         playerController = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
     }
 
@@ -50,13 +50,13 @@ public class DialogueManager : MonoBehaviour
         playerController.EnterUIMode();
 
         dialogueUI.SetActive(true);
-        currentNode = dialogueTree[0]; // Assuming first node has id 0
+        currentNode = dialogueTree[0]; 
         DisplayNode();
     }
 
     public void CloseDialogue()
     {
-        StartCoroutine(FadeDialogueUI(false)); // If so, fade out and disable the dialogue UI
+        StartCoroutine(FadeDialogueUI(false));
         playerController.SetCanMove(true);
     }
 
@@ -78,7 +78,7 @@ public class DialogueManager : MonoBehaviour
             // highlight selected option, unhighlight deselected options
             DisplayNode();
             
-            if (currentNode.Goodbye) // Check if this node is a 'goodbye' node
+            if (currentNode.Goodbye)
             {
                 CloseDialogue();
             }
