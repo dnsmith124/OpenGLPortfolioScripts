@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -23,6 +24,7 @@ public class DialogueManager : MonoBehaviour
     private Dictionary<int, DialogueNode> dialogueTree;
     private DialogueNode currentNode;
     private PlayerController playerController;
+    private PlayerStats playerStats;
 
     private bool isTextFinished = true;
     private string fullText;
@@ -39,6 +41,7 @@ public class DialogueManager : MonoBehaviour
         dialogueCanvasGroup.alpha = 0f; 
         dialogueCanvasGroup.interactable = false; 
         playerController = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
+        playerStats = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerStats>();
     }
 
     public void StartDialogue(NPCDialogue npcDialogue)
@@ -85,6 +88,27 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
+    private bool CheckCondition(string condition)
+    {
+        if (string.IsNullOrEmpty(condition))
+            return true;
+
+        string[] parts = condition.Split(':');
+        if (parts.Length != 2)
+            return GameController.Instance.conditions[condition];
+
+        switch (parts[0])
+        {
+            case "Strength":
+                return playerStats.Strength >= int.Parse(parts[1]);
+            case "Intelligence":
+                return playerStats.Intelligence >= int.Parse(parts[1]);
+            // ... other cases ...
+            default:
+                return false;
+        }
+    }
+
     private void DisplayNode()
     {
         // Start typing out the text
@@ -105,23 +129,44 @@ public class DialogueManager : MonoBehaviour
             }
             else
             {
-                buttons[i].GetComponentInChildren<TextMeshProUGUI>().text = currentNode.Options[i].Text;
-                // if the condition is null, or the condition is met
-                if (currentNode.Options[i].Condition == null || GameController.Instance.conditions[currentNode.Options[i].Condition])
+                Button button = buttons[i].GetComponent<Button>();
+                string condition = currentNode.Options[i].Condition;
+                // default button text option
+                string buttonText = currentNode.Options[i].Text;
+
+                // if the condition is met (also returns true for null)
+                if (CheckCondition(condition))
                 {
                     int index = i;
-                    buttons[i].onClick.RemoveAllListeners();
-                    buttons[i].onClick.AddListener(() => ChooseOption(index, buttons));
-                    buttons[i].GetComponent<Button>().interactable = true;
-                    buttons[i].gameObject.GetComponent<Button>().colors = ColorBlock.defaultColorBlock;
+                    button.onClick.RemoveAllListeners();
+                    button.onClick.AddListener(() => ChooseOption(index, buttons));
+                    button.interactable = true;
+                    button.colors = ColorBlock.defaultColorBlock;
+                    buttonText = currentNode.Options[i].Text;
                 }
-                // if the condition is not met, set the color and make it uninteractable
+                // if the condition is not met, apply fail text (if it exists), set the color and make it uninteractable
                 else
                 {
-                    buttons[i].gameObject.GetComponent<Button>().colors = conditionNotMetColorBlock;
-                    buttons[i].gameObject.GetComponent<Button>().interactable = false;
+                    // overwrite default text if failText exists
+                    if (currentNode.Options[i].FailText != null)
+                        buttonText = currentNode.Options[i].FailText;
+
+                    button.colors = conditionNotMetColorBlock;
+                    button.interactable = false;
                 }
-                buttons[i].gameObject.SetActive(true);
+
+                // if it has a condition, and the condition is 2 parts (i.e. has a value beyond true/false), add that to the text
+                if (condition != null && condition.Split(':').Length == 2)
+                {
+                    string[] parts = currentNode.Options[i].Condition.Split(':');
+                    string originalText = buttonText;
+                    PropertyInfo propertyInfo = playerStats.GetType().GetProperty(parts[0]);
+                    int playerStatValue = (int)propertyInfo.GetValue(playerStats);
+                    buttonText = $"{originalText} [{parts[0]}: {playerStatValue}/{parts[1]}]";
+                }
+
+                button.GetComponentInChildren<TextMeshProUGUI>().text = buttonText;
+                button.gameObject.SetActive(true);
             }
         }
     }

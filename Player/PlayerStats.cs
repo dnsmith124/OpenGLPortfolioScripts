@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class PlayerStats : MonoBehaviour
 {
+    public int Strength { get; set; }
+    public int Intelligence { get; set; }
     public int maxHealth = 100;
     public int currentHealth;
     public int maxMana = 100;
@@ -19,6 +21,8 @@ public class PlayerStats : MonoBehaviour
 
     void Start()
     {
+        Strength = 10;
+        Intelligence = 10;
         currentHealth = maxHealth;
         currentMana = maxMana;
         healthSlider.maxValue = maxHealth;
