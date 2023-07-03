@@ -24,8 +24,6 @@ public class PlayerController : MonoBehaviour
     public float projectileSpellCastAnimOffsetTime = 0.4f;
     [Tooltip("How long to wait during the casting animation before the aoe is initialized. Seconds.")]
     public float aoeSpellCastAnimOffsetTime = 0.25f;
-    public float aoeSpellRadius = 5f;
-    public int aoeSpellDamage = 10;
 
     private bool canMove = true;
     private bool spellCooldown = false;
@@ -204,7 +202,7 @@ public class PlayerController : MonoBehaviour
 
         // Wait for the specified time in the animation to cast the spell.
         yield return new WaitForSeconds(animOffsetTime);
-        playerSpellCasting.CastAoeSpell(transform.position, aoeSpellRadius, aoeSpellDamage);
+        playerSpellCasting.CastAoeSpell(transform.position);
 
         // Wait for the animation to finish
         yield return new WaitForSeconds(animationLength - animOffsetTime);
@@ -245,4 +243,6 @@ public class PlayerController : MonoBehaviour
         state = State.Idling;
         spellCooldown = false;
     }
+
+
 }
