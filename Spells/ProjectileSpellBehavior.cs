@@ -76,16 +76,4 @@ public class ProjectileSpellBehavior : MonoBehaviour
         Destroy(gameObject, 3f);
     }
 
-    public void LookAtTarget(Vector3 targetPosition)
-    {
-        Vector3 directionToTarget = targetPosition - transform.position;  // Calculate the direction to the target
-        directionToTarget.y = 0;  // Assuming you want to rotate only on the Y axis (to keep the object upright)
-
-        if (directionToTarget != Vector3.zero)  // Prevents LookRotation from creating errors when given a zero vector
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);  // Calculate the required rotation to face the target
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime);  // Gradually rotate towards the target
-        }
-    }
-
 }
