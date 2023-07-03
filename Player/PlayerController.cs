@@ -33,6 +33,7 @@ public class PlayerController : MonoBehaviour
     private Animator animator;
     private PlayerSpellCasting playerSpellCasting;
     private RaycastHit lastSpellTarget;
+    private PlayerStats playerStats;
 
     void Start()
     {
@@ -42,6 +43,7 @@ public class PlayerController : MonoBehaviour
         _mainCamera = Camera.main;
         animator = GetComponent<Animator>();
         playerSpellCasting = GetComponent<PlayerSpellCasting>();
+        playerStats = GetComponent<PlayerStats>();
     }
 
     void Update()
@@ -54,8 +56,10 @@ public class PlayerController : MonoBehaviour
 
         if(Input.GetButtonDown("Fire2"))
         {
-            if (spellCooldown)
+            if (spellCooldown || playerStats.currentMana < playerSpellCasting.projectileSpellCost)
             {
+                // flash skill icon red
+                Debug.Log("Not enough mana");
                 return;
             }
 
@@ -71,8 +75,10 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetButtonDown("Fire3"))
         {
-            if (spellCooldown)
+            if (spellCooldown || playerStats.currentMana < playerSpellCasting.aoeSpellCost)
             {
+                // flash skill icon red
+                Debug.Log("Not enough mana");
                 return;
             }
 

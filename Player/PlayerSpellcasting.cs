@@ -10,8 +10,17 @@ public class PlayerSpellCasting : MonoBehaviour
     public float spellInstantiateHeightOffset = 1.0f;
     public float aoeSpellRadius = 5f;
     public int aoeSpellDamage = 10;
+    public int aoeSpellCost = 30;
     public int projectileSpellDamage = 10;
+    public int projectileSpellCost = 10;
 
+    private static PlayerStats playerStats;
+    private int manaRegenRate;
+
+    private void Start()
+    {
+        playerStats = GetComponent<PlayerStats>();
+    }
 
     public void CastProjectileSpell(Vector3 targetDirection)
     {
@@ -27,6 +36,7 @@ public class PlayerSpellCasting : MonoBehaviour
 
         spellInstance.GetComponent<ProjectileSpellBehavior>().Setup(targetDirection, projectileSpellDamage);
 
+        playerStats.adjustMana(-projectileSpellCost);
     }
 
     public void CastAoeSpell (Vector3 center)
@@ -41,5 +51,6 @@ public class PlayerSpellCasting : MonoBehaviour
                 hitCollider.gameObject.GetComponent<EnemyAI>().TakeDamage(aoeSpellDamage);
             }
         }
+        playerStats.adjustMana(-aoeSpellCost);
     }
 }
