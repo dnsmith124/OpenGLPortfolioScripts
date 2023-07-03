@@ -5,9 +5,9 @@ using UnityEngine;
 public class PlayerSpellCasting : MonoBehaviour
 {
     public Rigidbody spellPrefab;
-    public float spellSpeed = 20f;
     [Tooltip("Determines the y coordinate for an instantiated spell prefab. An offset to the player's y coordinate;")]
     public float spellInstantiateHeightOffset = 1.0f;
+
 
     public void CastProjectileSpell(Vector3 targetDirection)
     {
@@ -21,8 +21,8 @@ public class PlayerSpellCasting : MonoBehaviour
 
         targetDirection.Normalize();
 
-        // Shoot the spell in the direction of the hit point
-        spellInstance.velocity = targetDirection * spellSpeed;
+        spellInstance.GetComponent<ProjectileSpellBehavior>().Setup(targetDirection);
+
     }
 
     public void CastAoeSpell (Vector3 center, float radius, int damage)
