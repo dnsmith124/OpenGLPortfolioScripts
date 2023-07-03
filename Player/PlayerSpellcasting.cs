@@ -14,7 +14,7 @@ public class PlayerSpellCasting : MonoBehaviour
     public int projectileSpellDamage = 10;
     public int projectileSpellCost = 10;
 
-    private static PlayerStats playerStats;
+    private PlayerStats playerStats;
     private int manaRegenRate;
 
     private void Start()

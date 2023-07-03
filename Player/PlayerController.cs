@@ -48,51 +48,48 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (!canMove)
+        if (canMove)
         {
-            agent.SetDestination(gameObject.transform.position);
-            return;
-        }
-
-        if(Input.GetButtonDown("Fire2"))
-        {
-            if (spellCooldown || playerStats.currentMana < playerSpellCasting.projectileSpellCost)
+            if(Input.GetButtonDown("Fire2"))
             {
-                // flash skill icon red
-                Debug.Log("Not enough mana");
+                if (spellCooldown || playerStats.currentMana < playerSpellCasting.projectileSpellCost)
+                {
+                    // flash mana bar red
+                    Debug.Log("CD or Not enough mana");
+                    return;
+                }
+
+                RaycastHit newSpellTarget = GetMousePositionFromRayCast();
+                if (newSpellTarget.collider.gameObject.tag == "NPC")
+                    return;
+
+                lastSpellTarget = newSpellTarget;
+                agent.ResetPath();
+                state = State.AttackOne;
                 return;
             }
 
-            RaycastHit newSpellTarget = GetMousePositionFromRayCast();
-            if (newSpellTarget.collider.gameObject.tag == "NPC")
-                return;
-
-            lastSpellTarget = newSpellTarget;
-            agent.ResetPath();
-            state = State.AttackOne;
-            return;
-        }
-
-        if (Input.GetButtonDown("Fire3"))
-        {
-            if (spellCooldown || playerStats.currentMana < playerSpellCasting.aoeSpellCost)
+            if (Input.GetButtonDown("Fire3"))
             {
-                // flash skill icon red
-                Debug.Log("Not enough mana");
+                if (spellCooldown || playerStats.currentMana < playerSpellCasting.aoeSpellCost)
+                {
+                    // flash mana bar red
+                    Debug.Log("CD or Not enough mana");
+                    return;
+                }
+
+                agent.ResetPath();
+                state = State.AttackTwo;
                 return;
             }
 
-            agent.ResetPath();
-            state = State.AttackTwo;
-            return;
-        }
 
-
-        if (Input.GetButton("Fire1"))
-        {
-            RaycastHit hit = GetMousePositionFromRayCast();
-            agent.destination = hit.point;
-            targetPoint = hit.point;
+            if (Input.GetButton("Fire1"))
+            {
+                RaycastHit hit = GetMousePositionFromRayCast();
+                agent.destination = hit.point;
+                targetPoint = hit.point;
+            }
         }
 
         switch (state)
@@ -135,6 +132,14 @@ public class PlayerController : MonoBehaviour
         }
 
         return new RaycastHit();
+    }
+
+    public void EnterUIMode()
+    {
+        Debug.Log("Enter UI Mode");
+        canMove = false;
+        agent.ResetPath();
+        state = State.Idling;
     }
 
     public void SetCanMove(bool value)
