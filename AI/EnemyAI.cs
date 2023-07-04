@@ -30,22 +30,17 @@ public class EnemyAI : MonoBehaviour
     private GameObject healthBarObject;
 
     private NavMeshAgent agent;
-    //private float attackTimer;
     private Animator animator;
     private Camera mainCamera;
     private CapsuleCollider attackCollider;
+    private AttackingHitbox attackingHitbox;
     private float initialColliderRadius;
 
     private bool isAttacking;
-    private Coroutine attackCoroutine;
 
     private void Start()
     {
-        attackCollider = GetComponent<CapsuleCollider>();
-        attackCollider.enabled = false;
-        initialColliderRadius = attackCollider.radius;
 
-        isAttacking = false;
 
         target = GameObject.FindGameObjectWithTag("Player").transform;
         playerStats = target.GetComponent<PlayerStats>();
@@ -63,6 +58,13 @@ public class EnemyAI : MonoBehaviour
 
         ChangeState(State.Idling);
 
+        attackingHitbox = gameObject.GetComponentInChildren<AttackingHitbox>();
+        attackingHitbox.initAttackingHitbox(attackDamage, playerStats, target, attackDamageDelay, attackRange);
+        attackCollider = attackingHitbox.GetComponent<CapsuleCollider>();
+        attackCollider.enabled = false;
+        initialColliderRadius = attackCollider.radius;
+
+        isAttacking = false;
     }
 
     private void Update()
@@ -189,48 +191,6 @@ public class EnemyAI : MonoBehaviour
         ChangeState(stateToRevertTo);
         isAttacking = false;
 
-    }
-
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.CompareTag("Player") && playerStats)
-        {
-            // If a previous attack coroutine is still running, stop it
-            if (attackCoroutine != null)
-            {
-                StopCoroutine(attackCoroutine);
-            }
-
-            // Start a new attack coroutine
-            attackCoroutine = StartCoroutine(DealDamageAfterDelay(attackDamageDelay)); 
-        }
-    }
-
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.gameObject.CompareTag("Player"))
-        {
-            // If an attack coroutine is still running, stop it
-            if (attackCoroutine != null)
-            {
-                StopCoroutine(attackCoroutine);
-                attackCoroutine = null;
-            }
-        }
-    }
-
-
-    private IEnumerator DealDamageAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        // If the player is still within range, apply damage
-        if (Vector3.Distance(target.position, transform.position) <= attackRange)
-        {
-            playerStats.adjustHealth(-attackDamage);
-        }
     }
 
     private void HandleIdling(float distanceToTarget)

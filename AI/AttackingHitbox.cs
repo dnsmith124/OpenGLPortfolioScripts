@@ -1,0 +1,74 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class AttackingHitbox : MonoBehaviour
+{
+
+    private int attackDamage;
+    private PlayerStats playerStats;
+    private Transform target;
+    private Coroutine attackCoroutine;
+    private float attackDamageDelay;
+    private float attackRange;
+
+    // Start is called before the first frame update
+    void Start()
+    {
+
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        
+    }
+
+    public void initAttackingHitbox(int damage, PlayerStats playerStats, Transform playerTransform, float attackDamageDelay, float attackRange)
+    {
+        attackDamage = damage;
+        this.playerStats = playerStats;
+        target = playerTransform;
+        this.attackDamageDelay = attackDamageDelay;
+        this.attackRange = attackRange;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Player") && playerStats)
+        {
+            // If a previous attack coroutine is still running, stop it
+            if (attackCoroutine != null)
+            {
+                StopCoroutine(attackCoroutine);
+            }
+
+            // Start a new attack coroutine
+            attackCoroutine = StartCoroutine(DealDamageAfterDelay(attackDamageDelay));
+        }
+    }
+
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.CompareTag("Player"))
+        {
+            // If an attack coroutine is still running, stop it
+            if (attackCoroutine != null)
+            {
+                StopCoroutine(attackCoroutine);
+                attackCoroutine = null;
+            }
+        }
+    }
+
+
+    private IEnumerator DealDamageAfterDelay(float delay)
+    {
+
+        yield return new WaitForSeconds(delay);
+
+        Debug.Log("Hit");
+        playerStats.adjustHealth(-attackDamage);
+    }
+}
