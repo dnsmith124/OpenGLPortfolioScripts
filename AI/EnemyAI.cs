@@ -16,9 +16,13 @@ public class EnemyAI : MonoBehaviour
 
     public State state;
     public Transform target;
+    private PlayerStats playerStats;
+    public float movementSpeed = 10.0f;
     public float chaseRange = 10.0f;
     public float attackRange = 2.2f;
-    public float attackDelay = 1.0f;
+    public int attackDamage = 25;
+    [Tooltip("Time before damage takes place in an animation.")]
+    public float attackDamageDelay = 1.0f;
 
     private int currentHealth;
     public int maxHealth = 100;
@@ -26,15 +30,28 @@ public class EnemyAI : MonoBehaviour
     private GameObject healthBarObject;
 
     private NavMeshAgent agent;
-    private float attackTimer;
+    //private float attackTimer;
     private Animator animator;
     private Camera mainCamera;
+    private CapsuleCollider attackCollider;
+    private float initialColliderRadius;
+
+    private bool isAttacking;
+    private Coroutine attackCoroutine;
 
     private void Start()
     {
+        attackCollider = GetComponent<CapsuleCollider>();
+        attackCollider.enabled = false;
+        initialColliderRadius = attackCollider.radius;
+
+        isAttacking = false;
+
         target = GameObject.FindGameObjectWithTag("Player").transform;
+        playerStats = target.GetComponent<PlayerStats>();
         agent = GetComponent<NavMeshAgent>();
-        state = State.Idling;
+        agent.speed = movementSpeed;
+
         animator = GetComponent<Animator>();
 
         healthBarObject = healthBar.gameObject;
@@ -43,6 +60,9 @@ public class EnemyAI : MonoBehaviour
         healthBar.maxValue = maxHealth;
         healthBar.value = currentHealth;
         healthBarObject.SetActive(false);
+
+        ChangeState(State.Idling);
+
     }
 
     private void Update()
@@ -61,14 +81,16 @@ public class EnemyAI : MonoBehaviour
                     break;
 
                 case State.Attacking:
-                    HandleAttacking(distanceToTarget);
+                    if (!isAttacking)
+                        HandleAttacking();
                     break;
 
                 case State.Dying:
                     HandleDying();
                     break;
             }
-        } else
+        }
+        else
         {
             switch (state)
             {
@@ -89,51 +111,158 @@ public class EnemyAI : MonoBehaviour
         healthBarObject.transform.LookAt(healthBarObject.transform.position + mainCamera.transform.rotation * Vector3.forward, mainCamera.transform.rotation * Vector3.up);
     }
 
+    private void ChangeState(State newState)
+    {
+        if (newState == state)
+        {
+            return;
+        }
+
+        state = newState;
+
+        switch (state)
+        {
+            case State.Idling:
+                animator.SetTrigger("Idling");
+                break;
+            case State.Walking:
+                animator.SetTrigger("Walking");
+                break;
+            case State.TakingDamage:
+                animator.SetTrigger("Damaging");
+                break;
+            case State.Attacking:
+                //animator trigger handled in HandleAttacking()=>TriggerAttack()
+                break;
+            case State.Dying:
+                animator.SetTrigger("Dying");
+                break;
+        }
+    }
+
     private void HandleDying()
     {
+        agent.ResetPath();
         StartCoroutine(TriggerDyingAnimAndCleanup());
     }
 
-    private void HandleAttacking(float distanceToTarget)
+    private void HandleAttacking()
     {
         agent.ResetPath();
+        StartCoroutine(TriggerAttack());
+    }
+
+    private IEnumerator TriggerAttack()
+    {
+        isAttacking = true;
+        // resize the hitbox
+        attackCollider.radius = attackRange;
+        // Enable the attack hitbox
+        attackCollider.enabled = true;
+
+        // Trigger the animation
         animator.SetTrigger("Attacking");
-        if (attackTimer >= attackDelay)
+
+        // get the length of the triggered animation
+        float animationLength = AnimationUtils.GetAnimationClipLength(animator, "Attacking");
+
+        // Wait for the animation to finish
+        yield return new WaitForSeconds(animationLength);
+
+        // Disable the attack hitbox
+        attackCollider.enabled = false;
+
+        // reset the hitbox size
+        attackCollider.radius = initialColliderRadius;
+
+        // Check distance to player
+        float distanceToTarget = Vector3.Distance(target.position, transform.position);
+
+        State stateToRevertTo = State.Idling;
+        if (distanceToTarget <= chaseRange && distanceToTarget > attackRange)
         {
-            // Insert Attack code here.
-            // Make sure to reset the attack timer after attacking.
-            attackTimer = 0;
+            // If player is within chase range but outside attack range, start walking
+            stateToRevertTo = State.Walking;
         }
-        attackTimer += Time.deltaTime;
-        if (distanceToTarget > attackRange)
+
+        // Set state
+        ChangeState(stateToRevertTo);
+        isAttacking = false;
+
+    }
+
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Player") && playerStats)
         {
-            state = State.Walking;
+            // If a previous attack coroutine is still running, stop it
+            if (attackCoroutine != null)
+            {
+                StopCoroutine(attackCoroutine);
+            }
+
+            // Start a new attack coroutine
+            attackCoroutine = StartCoroutine(DealDamageAfterDelay(attackDamageDelay)); 
+        }
+    }
+
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.CompareTag("Player"))
+        {
+            // If an attack coroutine is still running, stop it
+            if (attackCoroutine != null)
+            {
+                StopCoroutine(attackCoroutine);
+                attackCoroutine = null;
+            }
+        }
+    }
+
+
+    private IEnumerator DealDamageAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        // If the player is still within range, apply damage
+        if (Vector3.Distance(target.position, transform.position) <= attackRange)
+        {
+            playerStats.adjustHealth(-attackDamage);
         }
     }
 
     private void HandleIdling(float distanceToTarget)
     {
-        animator.SetTrigger("Idling");
-        if (distanceToTarget <= chaseRange)
+        if (distanceToTarget <= chaseRange && distanceToTarget > attackRange)
         {
-            state = State.Walking;
+            ChangeState(State.Walking);
+            return;
+        }
+        if (distanceToTarget <= attackRange)
+        {
+            ChangeState(State.Attacking);
+            return;
         }
     }
 
     private void HandleWalking(float distanceToTarget)
     {
-        agent.SetDestination(target.position);
-        animator.SetTrigger("Walking");
         if (distanceToTarget <= attackRange)
         {
-            state = State.Attacking;
+            ChangeState(State.Attacking);
+            return;
         }
 
         if (distanceToTarget >= chaseRange)
         {
             agent.ResetPath();
-            state = State.Idling;
+            ChangeState(State.Idling);
+            return;
         }
+
+        agent.SetDestination(target.position);
     }
 
     public void TakeDamage(int damage)
@@ -149,17 +278,20 @@ public class EnemyAI : MonoBehaviour
 
         if (currentHealth <= 0)
         {
-            state = State.Dying;
+            ChangeState(State.Dying);
         }
         else
         {
             animator.SetTrigger("Damaging");
-            state = State.Idling;
+            ChangeState(State.Idling);
         }
     }
 
     private IEnumerator TriggerDyingAnimAndCleanup()
     {
+        attackCollider.enabled = false;
+        healthBarObject.SetActive(false);
+
         // get the length of the triggered animation
         float animationLength = AnimationUtils.GetAnimationClipLength(animator, "Death");
         animator.SetTrigger("Dying");
