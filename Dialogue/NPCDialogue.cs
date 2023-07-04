@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class NPCDialogue : MonoBehaviour
 {
-    public string speakerName; // Assign in Inspector
+    public string speakerName;
     public float interactionDistance = 2.0f;
-    public string dialogueJsonFileName; // Assign in Inspector
+    public string dialogueJsonFileName;
     public DialogueManager dialogueManager; 
 
     private Camera mainCamera;
@@ -14,7 +14,6 @@ public class NPCDialogue : MonoBehaviour
     private DialogueData dialogueData;
     private bool hasBeenClicked = false;
 
-    // Start is called before the first frame update
     void Start()
     {
         LoadDialogue(dialogueJsonFileName);
@@ -23,7 +22,6 @@ public class NPCDialogue : MonoBehaviour
         playerObject = GameObject.FindGameObjectWithTag("Player");
     }
 
-    // Update is called once per frame
     void Update()
     {
         if(hasBeenClicked)
