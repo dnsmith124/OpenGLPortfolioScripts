@@ -24,6 +24,17 @@ public class AttackingHitbox : MonoBehaviour
         
     }
 
+    public void KillAttackingCoroutine(bool death)
+    {
+        if(attackCoroutine != null)
+        {
+            StopCoroutine(attackCoroutine);
+            attackCoroutine = null;
+        }
+        if (death)
+            target = null;
+    }
+
     public void initAttackingHitbox(int damage, PlayerStats playerStats, Transform playerTransform, float attackDamageDelay, float attackRange)
     {
         attackDamage = damage;
@@ -35,7 +46,7 @@ public class AttackingHitbox : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("Player") && playerStats)
+        if (target != null && other.gameObject.CompareTag("Player") && playerStats)
         {
             // If a previous attack coroutine is still running, stop it
             if (attackCoroutine != null)
@@ -68,7 +79,10 @@ public class AttackingHitbox : MonoBehaviour
 
         yield return new WaitForSeconds(delay);
 
-        Debug.Log("Hit");
-        playerStats.adjustHealth(-attackDamage);
+        // If the player is still within range (plus a little leeway, apply damage)
+        if (Vector3.Distance(target.position, transform.position) <= attackRange + 0.25f)
+        {
+            playerStats.adjustHealth(-attackDamage);
+        }
     }
 }

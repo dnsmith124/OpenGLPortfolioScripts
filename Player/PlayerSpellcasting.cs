@@ -45,10 +45,11 @@ public class PlayerSpellCasting : MonoBehaviour
         Instantiate(aoePrefab, transform.position, transform.rotation);
         foreach (var hitCollider in hitColliders)
         {
-            if (hitCollider.gameObject.GetComponent<EnemyAI>())
+            
+            if (hitCollider.gameObject.GetComponent<ReceivingHitbox>())
             {
-                // This assumes your enemy script has a function called TakeDamage
-                hitCollider.gameObject.GetComponent<EnemyAI>().TakeDamage(aoeSpellDamage);
+                hitCollider.GetComponentInParent<EnemyAI>().TakeDamage(aoeSpellDamage);
+                Debug.Log($"{hitCollider.gameObject.name} Takes Damage");
             }
         }
         playerStats.adjustMana(-aoeSpellCost);

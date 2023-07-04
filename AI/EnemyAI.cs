@@ -37,6 +37,7 @@ public class EnemyAI : MonoBehaviour
     private float initialColliderRadius;
 
     private bool isAttacking;
+    private bool isDying;
 
     private void Start()
     {
@@ -65,10 +66,17 @@ public class EnemyAI : MonoBehaviour
         initialColliderRadius = attackCollider.radius;
 
         isAttacking = false;
+        isDying = false;
     }
 
     private void Update()
     {
+        if(isDying)
+        {
+            HandleDying();
+            return;
+        }
+
         if (GameController.Instance.isAIEnabled)
         {
             float distanceToTarget = Vector3.Distance(target.position, transform.position);
@@ -80,6 +88,11 @@ public class EnemyAI : MonoBehaviour
 
                 case State.Walking:
                     HandleWalking(distanceToTarget);
+                    break;
+
+                case State.TakingDamage:
+                    if (!isAttacking)
+                        HandleTakingDamage();
                     break;
 
                 case State.Attacking:
@@ -145,6 +158,7 @@ public class EnemyAI : MonoBehaviour
     private void HandleDying()
     {
         agent.ResetPath();
+        isDying = true;
         StartCoroutine(TriggerDyingAnimAndCleanup());
     }
 
@@ -225,9 +239,48 @@ public class EnemyAI : MonoBehaviour
         agent.SetDestination(target.position);
     }
 
+    private void HandleTakingDamage()
+    {
+        agent.ResetPath();
+        StartCoroutine(TriggerDamage());
+    }
+
+    private IEnumerator TriggerDamage()
+    {
+        // animation triggered in ChangeState above
+        //animator.SetTrigger("Damaging");
+
+        // get the length of the triggered animation
+        float animationLength = AnimationUtils.GetAnimationClipLength(animator, "Damaging");
+
+        // Wait for the animation to finish
+        yield return new WaitForSeconds(animationLength);
+
+        // Check distance to player
+        float distanceToTarget = Vector3.Distance(target.position, transform.position);
+
+        State stateToRevertTo = State.Idling;
+        if (distanceToTarget <= chaseRange && distanceToTarget > attackRange)
+        {
+            // If player is within chase range but outside attack range, start walking
+            stateToRevertTo = State.Walking;
+        }
+        if (distanceToTarget <= attackRange)
+        {
+            // If player is within chase range but outside attack range, start walking
+            stateToRevertTo = State.Attacking;
+        }
+
+        // Set state
+        ChangeState(stateToRevertTo);
+
+    }
+
     public void TakeDamage(int damage)
     {
         agent.ResetPath();
+        attackingHitbox.KillAttackingCoroutine(false);
+
         currentHealth -= damage;
         healthBar.value = currentHealth;
 
@@ -242,8 +295,7 @@ public class EnemyAI : MonoBehaviour
         }
         else
         {
-            animator.SetTrigger("Damaging");
-            ChangeState(State.Idling);
+            ChangeState(State.TakingDamage);
         }
     }
 
@@ -251,6 +303,7 @@ public class EnemyAI : MonoBehaviour
     {
         attackCollider.enabled = false;
         healthBarObject.SetActive(false);
+        attackingHitbox.KillAttackingCoroutine(true);
 
         // get the length of the triggered animation
         float animationLength = AnimationUtils.GetAnimationClipLength(animator, "Death");
