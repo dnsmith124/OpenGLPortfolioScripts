@@ -132,7 +132,7 @@ public class EnemyAI : MonoBehaviour
                 animator.SetTrigger("Damaging");
                 break;
             case State.Attacking:
-                animator.SetTrigger("Attacking");
+                //animator trigger handled in HandleAttacking()=>TriggerAttack()
                 break;
             case State.Dying:
                 animator.SetTrigger("Dying");
@@ -142,16 +142,17 @@ public class EnemyAI : MonoBehaviour
 
     private void HandleDying()
     {
+        agent.ResetPath();
         StartCoroutine(TriggerDyingAnimAndCleanup());
     }
 
     private void HandleAttacking()
     {
         agent.ResetPath();
-        StartCoroutine(TriggerAnim("Attacking", State.Idling));
+        StartCoroutine(TriggerAttack());
     }
 
-    private IEnumerator TriggerAnim(string triggerName, State stateToRevertTo)
+    private IEnumerator TriggerAttack()
     {
         isAttacking = true;
         // resize the hitbox
@@ -160,10 +161,10 @@ public class EnemyAI : MonoBehaviour
         attackCollider.enabled = true;
 
         // Trigger the animation
-        animator.SetTrigger(triggerName);
+        animator.SetTrigger("Attacking");
 
         // get the length of the triggered animation
-        float animationLength = AnimationUtils.GetAnimationClipLength(animator, triggerName);
+        float animationLength = AnimationUtils.GetAnimationClipLength(animator, "Attacking");
 
         // Wait for the animation to finish
         yield return new WaitForSeconds(animationLength);
@@ -174,7 +175,17 @@ public class EnemyAI : MonoBehaviour
         // reset the hitbox size
         attackCollider.radius = initialColliderRadius;
 
-        // Set state to Idling
+        // Check distance to player
+        float distanceToTarget = Vector3.Distance(target.position, transform.position);
+
+        State stateToRevertTo = State.Idling;
+        if (distanceToTarget <= chaseRange && distanceToTarget > attackRange)
+        {
+            // If player is within chase range but outside attack range, start walking
+            stateToRevertTo = State.Walking;
+        }
+
+        // Set state
         ChangeState(stateToRevertTo);
         isAttacking = false;
 
@@ -218,7 +229,6 @@ public class EnemyAI : MonoBehaviour
         // If the player is still within range, apply damage
         if (Vector3.Distance(target.position, transform.position) <= attackRange)
         {
-            Debug.Log("Hit");
             playerStats.adjustHealth(-attackDamage);
         }
     }
@@ -279,6 +289,9 @@ public class EnemyAI : MonoBehaviour
 
     private IEnumerator TriggerDyingAnimAndCleanup()
     {
+        attackCollider.enabled = false;
+        healthBarObject.SetActive(false);
+
         // get the length of the triggered animation
         float animationLength = AnimationUtils.GetAnimationClipLength(animator, "Death");
         animator.SetTrigger("Dying");
