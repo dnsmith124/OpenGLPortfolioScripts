@@ -2,37 +2,46 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
 public class DialogueManager : MonoBehaviour
 {
-    public GameObject dialogueUI; // Assigned in Start
-    public TextMeshProUGUI npcText; // Assigned in Inspector
-    public TextMeshProUGUI speakerName; // Assigned in Inspector
-    public Button[] playerButtons; // Assigned in Inspector
+    public GameObject dialogueUI; 
+    public TextMeshProUGUI npcText; 
+    public TextMeshProUGUI speakerName; 
+    public Button[] playerButtons; 
     [Tooltip("Determines Text Reveal Speed. Best between .25 and 1. Lower is faster.")]
-    public float textSpeed = 0.5f; // Assigned in Inspector
+    public float textSpeed = 0.5f;
+    [Tooltip("How long to wait after the text has been revealed to display the responses")]
+    public float showResponsesDelayTime = 0.5f;
     [Tooltip("Duration in seconds for the fade in/out animation.")]
-    public float fadeDuration = .5f; 
+    public float fadeDuration = .5f;
 
     private CanvasGroup dialogueCanvasGroup;
     private Dictionary<int, DialogueNode> dialogueTree;
     private DialogueNode currentNode;
     private PlayerController playerController;
+    private PlayerStats playerStats;
 
     private bool isTextFinished = true;
     private string fullText;
     private Coroutine typingCoroutine;
+    private ColorBlock conditionNotMetColorBlock;
 
     private void Start()
     {
+        conditionNotMetColorBlock = ColorBlock.defaultColorBlock;
+        conditionNotMetColorBlock.disabledColor = new Color(255, 0, 0, .5f);
+
         dialogueUI = gameObject;
         dialogueCanvasGroup = dialogueUI.GetComponent<CanvasGroup>();
-        dialogueCanvasGroup.alpha = 0f; // Start invisible
-        dialogueCanvasGroup.interactable = false; // Start non-interactable
+        dialogueCanvasGroup.alpha = 0f; 
+        dialogueCanvasGroup.interactable = false; 
         playerController = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
+        playerStats = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerStats>();
     }
 
     public void StartDialogue(NPCDialogue npcDialogue)
@@ -41,29 +50,62 @@ public class DialogueManager : MonoBehaviour
         speakerName.text = npcDialogue.GetSpeakerName();
         StartCoroutine(FadeDialogueUI(true));
 
-        playerController.SetCanMove(false);
+        playerController.EnterUIMode();
 
         dialogueUI.SetActive(true);
-        currentNode = dialogueTree[0]; // Assuming first node has id 0
+        currentNode = dialogueTree[0]; 
         DisplayNode();
     }
 
     public void CloseDialogue()
     {
-        StartCoroutine(FadeDialogueUI(false)); // If so, fade out and disable the dialogue UI
+        StartCoroutine(FadeDialogueUI(false));
         playerController.SetCanMove(true);
     }
 
-    public void ChooseOption(int optionIndex)
+    public void ChooseOption(int optionIndex, Button[] buttons)
     {
+
         if (isTextFinished && optionIndex < currentNode.Options.Count)
         {
             currentNode = dialogueTree[currentNode.Options[optionIndex].NextNodeId];
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                // if its not the selected option, hide it
+                if (i != optionIndex)
+                    buttons[i].gameObject.SetActive(false);
+                // if it is, make it non-interactable
+                else
+                    buttons[i].GetComponent<Button>().interactable = false;
+            }
+            // highlight selected option, unhighlight deselected options
             DisplayNode();
-            if (currentNode.Goodbye) // Check if this node is a 'goodbye' node
+            
+            if (currentNode.Goodbye)
             {
                 CloseDialogue();
             }
+        }
+    }
+
+    private bool CheckCondition(string condition)
+    {
+        if (string.IsNullOrEmpty(condition))
+            return true;
+
+        string[] parts = condition.Split(':');
+        if (parts.Length != 2)
+            return GameController.Instance.conditions[condition];
+
+        switch (parts[0])
+        {
+            case "Strength":
+                return playerStats.Strength >= int.Parse(parts[1]);
+            case "Intelligence":
+                return playerStats.Intelligence >= int.Parse(parts[1]);
+            // ... other cases ...
+            default:
+                return false;
         }
     }
 
@@ -75,10 +117,57 @@ public class DialogueManager : MonoBehaviour
         fullText = currentNode.DialogueText;
         typingCoroutine = StartCoroutine(TypeText(fullText));
 
-        // Disable buttons until text is finished
-        foreach (Button button in playerButtons)
+    }
+
+    private void EnableButtons(Button[] buttons)
+    {
+        for (int i = 0; i < buttons.Length; i++)
         {
-            button.interactable = false;
+            if (i >= currentNode.Options.Count)
+            {
+                buttons[i].gameObject.SetActive(false);
+            }
+            else
+            {
+                Button button = buttons[i].GetComponent<Button>();
+                string condition = currentNode.Options[i].Condition;
+                // default button text option
+                string buttonText = currentNode.Options[i].Text;
+
+                // if the condition is met (also returns true for null)
+                if (CheckCondition(condition))
+                {
+                    int index = i;
+                    button.onClick.RemoveAllListeners();
+                    button.onClick.AddListener(() => ChooseOption(index, buttons));
+                    button.interactable = true;
+                    button.colors = ColorBlock.defaultColorBlock;
+                    buttonText = currentNode.Options[i].Text;
+                }
+                // if the condition is not met, apply fail text (if it exists), set the color and make it uninteractable
+                else
+                {
+                    // overwrite default text if failText exists
+                    if (currentNode.Options[i].FailText != null)
+                        buttonText = currentNode.Options[i].FailText;
+
+                    button.colors = conditionNotMetColorBlock;
+                    button.interactable = false;
+                }
+
+                // if it has a condition, and the condition is 2 parts (i.e. has a value beyond true/false), add that to the text
+                if (condition != null && condition.Split(':').Length == 2)
+                {
+                    string[] parts = currentNode.Options[i].Condition.Split(':');
+                    string originalText = buttonText;
+                    PropertyInfo propertyInfo = playerStats.GetType().GetProperty(parts[0]);
+                    int playerStatValue = (int)propertyInfo.GetValue(playerStats);
+                    buttonText = $"{originalText} [{parts[0]}: {playerStatValue}/{parts[1]}]";
+                }
+
+                button.GetComponentInChildren<TextMeshProUGUI>().text = buttonText;
+                button.gameObject.SetActive(true);
+            }
         }
     }
 
@@ -89,27 +178,14 @@ public class DialogueManager : MonoBehaviour
         foreach (char letter in textToType.ToCharArray())
         {
             npcText.text += letter;
-            yield return new WaitForSeconds(textSpeed * 0.1f); // Adjust this to change typing speed
+            yield return new WaitForSeconds(textSpeed * 0.1f);
         }
         isTextFinished = true;
 
-        // Re-enable the buttons
-        for (int i = 0; i < playerButtons.Length; i++)
-        {
-            if (i < currentNode.Options.Count)
-            {
-                playerButtons[i].gameObject.SetActive(true);
-                playerButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = currentNode.Options[i].Text;
-                int index = i;
-                playerButtons[i].onClick.RemoveAllListeners();
-                playerButtons[i].onClick.AddListener(() => ChooseOption(index));
-                playerButtons[i].interactable = true;
-            }
-            else
-            {
-                playerButtons[i].gameObject.SetActive(false);
-            }
-        }
+        yield return new WaitForSeconds(showResponsesDelayTime);
+
+        EnableButtons(playerButtons);
+
     }
 
     private void Update()
@@ -120,22 +196,7 @@ public class DialogueManager : MonoBehaviour
             npcText.text = fullText;
             isTextFinished = true;
             // Re-enable the buttons
-            for (int i = 0; i < playerButtons.Length; i++)
-            {
-                if (i < currentNode.Options.Count)
-                {
-                    playerButtons[i].gameObject.SetActive(true);
-                    playerButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = currentNode.Options[i].Text;
-                    int index = i;
-                    playerButtons[i].onClick.RemoveAllListeners();
-                    playerButtons[i].onClick.AddListener(() => ChooseOption(index));
-                    playerButtons[i].interactable = true;
-                }
-                else
-                {
-                    playerButtons[i].gameObject.SetActive(false);
-                }
-            }
+            EnableButtons(playerButtons);
         }
     }
     private IEnumerator FadeDialogueUI(bool fadeIn)
