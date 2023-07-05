@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 
 public class EnemyAI : MonoBehaviour
 {
@@ -23,6 +24,9 @@ public class EnemyAI : MonoBehaviour
     public int attackDamage = 25;
     [Tooltip("Time before damage takes place in an animation.")]
     public float attackDamageDelay = 1.0f;
+    public float randomDropOffset = 2.0f;
+
+    public List<GameObject> drops;
 
     private int currentHealth;
     public int maxHealth = 100;
@@ -253,7 +257,6 @@ public class EnemyAI : MonoBehaviour
     private IEnumerator TriggerDamage()
     {
         // animation triggered in ChangeState above
-        //animator.SetTrigger("Damaging");
 
         // get the length of the triggered animation
         float animationLength = AnimationUtils.GetAnimationClipLength(animator, "Damaging");
@@ -277,7 +280,6 @@ public class EnemyAI : MonoBehaviour
             // If player is within chase range but outside attack range, start walking
             stateToRevertTo = State.Attacking;
         }
-
 
         // Set state
         ChangeState(stateToRevertTo);
@@ -323,10 +325,25 @@ public class EnemyAI : MonoBehaviour
 
         // Insert some sort of fade or something here
 
-        // Let the body lie there for the duration of the animation
-        yield return new WaitForSeconds(animationLength);
+        // Let the body lie there for half the duration of the animation
+        yield return new WaitForSeconds(animationLength / 2);
 
         // Insert Drop code here (gold, xp gain etc)
+        foreach (var drop in drops)
+        {
+            Vector3 randomizedPosition = transform.position + new Vector3(Random.Range(-randomDropOffset, randomDropOffset), 0, Random.Range(-randomDropOffset, randomDropOffset));
+
+            Instantiate(drop, randomizedPosition, transform.rotation);
+             randomizedPosition = transform.position + new Vector3(Random.Range(-randomDropOffset, randomDropOffset), 0, Random.Range(-randomDropOffset, randomDropOffset));
+
+            Instantiate(drop, randomizedPosition, transform.rotation);
+             randomizedPosition = transform.position + new Vector3(Random.Range(-randomDropOffset, randomDropOffset), 0, Random.Range(-randomDropOffset, randomDropOffset));
+
+            Instantiate(drop, randomizedPosition, transform.rotation);
+             randomizedPosition = transform.position + new Vector3(Random.Range(-randomDropOffset, randomDropOffset), 0, Random.Range(-randomDropOffset, randomDropOffset));
+
+            Instantiate(drop, randomizedPosition, transform.rotation);
+        }
 
         Die();
     }

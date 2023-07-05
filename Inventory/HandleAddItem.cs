@@ -1,15 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class HandleAddItem : MonoBehaviour
 {
-    public enum ItemType
-    {
-        Gold,
-        Item
-    }
-    public ItemType typeToAdd;
     public InventoryItem item;
     public int goldAmount;
     public float interactionRadius = 2f;
@@ -42,20 +34,7 @@ public class HandleAddItem : MonoBehaviour
         if (distance <= interactionRadius)
         {
             itemAdded = true;
-            switch (typeToAdd)
-            {
-                case ItemType.Gold:
-                    // play gold sound effect
-
-                    playerInventory.adjustGoldCount(goldAmount);
-                    StartCoroutine(DestroyGold());
-                    break;
-                case ItemType.Item:
-                    playerInventory.AddItem(item);
-                    break;
-                default:
-                    break;
-            }
+            playerInventory.AddItem(item);
         }
     }
 
@@ -69,12 +48,6 @@ public class HandleAddItem : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, interactionRadius);
-    }
-
-    private IEnumerator DestroyGold()
-    {
-        yield return new WaitForSeconds(.25f);
-        Destroy(gameObject);
     }
 
 }
