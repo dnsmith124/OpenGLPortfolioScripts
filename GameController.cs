@@ -8,6 +8,7 @@ public class GameController : MonoBehaviour
     public static GameController Instance { get; private set; }
 
     public bool isAIEnabled;
+    public bool isPaused;
     public int gameDifficulty;
 
     public Dictionary<string, bool> conditions = new Dictionary<string, bool>();
@@ -28,6 +29,21 @@ public class GameController : MonoBehaviour
         }
 
         InitConditions();
+    }
+
+    void Update()
+    {
+        if (Input.GetButtonDown("Menu"))
+        {
+            if (isPaused)
+            {
+                ResumeGame();
+            }
+            else
+            {
+                PauseGame();
+            }
+        }
     }
 
     private void InitConditions()
@@ -63,5 +79,19 @@ public class GameController : MonoBehaviour
     public void RemoveCondition(string label)
     {
         conditions.Remove(label);
+    }
+
+    public void PauseGame()
+    {
+        Time.timeScale = 0f;
+        isPaused = true;
+        // bring up pause menu here
+    }
+
+    public void ResumeGame()
+    {
+        Time.timeScale = 1f;
+        isPaused = false;
+        // hide pause menu here
     }
 }
