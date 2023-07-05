@@ -34,6 +34,8 @@ public class EnemyAI : MonoBehaviour
     private Camera mainCamera;
     private CapsuleCollider attackCollider;
     private AttackingHitbox attackingHitbox;
+    private CapsuleCollider receivingCollider;
+    private ReceivingHitbox receivingHitbox;
     private float initialColliderRadius;
 
     private bool isAttacking;
@@ -64,6 +66,9 @@ public class EnemyAI : MonoBehaviour
         attackCollider = attackingHitbox.GetComponent<CapsuleCollider>();
         attackCollider.enabled = false;
         initialColliderRadius = attackCollider.radius;
+
+        receivingHitbox = gameObject.GetComponentInChildren<ReceivingHitbox>();
+        receivingCollider = receivingHitbox.GetComponent<CapsuleCollider>();
 
         isAttacking = false;
         isDying = false;
@@ -259,6 +264,8 @@ public class EnemyAI : MonoBehaviour
         // Check distance to player
         float distanceToTarget = Vector3.Distance(target.position, transform.position);
 
+        chaseRange *= 10.0f;
+
         State stateToRevertTo = State.Idling;
         if (distanceToTarget <= chaseRange && distanceToTarget > attackRange)
         {
@@ -270,6 +277,7 @@ public class EnemyAI : MonoBehaviour
             // If player is within chase range but outside attack range, start walking
             stateToRevertTo = State.Attacking;
         }
+
 
         // Set state
         ChangeState(stateToRevertTo);
@@ -302,6 +310,7 @@ public class EnemyAI : MonoBehaviour
     private IEnumerator TriggerDyingAnimAndCleanup()
     {
         attackCollider.enabled = false;
+        receivingCollider.enabled = false;
         healthBarObject.SetActive(false);
         attackingHitbox.KillAttackingCoroutine(true);
 

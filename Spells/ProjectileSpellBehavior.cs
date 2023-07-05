@@ -44,14 +44,16 @@ public class ProjectileSpellBehavior : MonoBehaviour
 
     private void OnTriggerEnter(Collider col)
     {
-        // if we hit the player or the wrong hitbox return
-        if(col.GetComponent<PlayerController>() || col.GetComponent<AttackingHitbox>())
+        // if we hit something we shouldn't, return
+        if(col.GetComponent<PlayerController>() || col.GetComponent<AttackingHitbox>() || col.GetComponent<NPCDialogue>())
         {
             return;
         }
 
         GameObject hitFX;
-        hitFX = Instantiate(FXHit, col.transform.position, Quaternion.identity);
+        Vector3 alteredPosition = col.transform.position;
+        alteredPosition.y += 1;
+        hitFX = Instantiate(FXHit, alteredPosition, Quaternion.identity);
         Destroy(hitFX, 3f);
 
         fXProjectileBaseParticles.gameObject.SetActive(false);

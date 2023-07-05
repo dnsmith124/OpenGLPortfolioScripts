@@ -44,9 +44,9 @@ public class AttackingHitbox : MonoBehaviour
         this.attackRange = attackRange;
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider col)
     {
-        if (target != null && other.gameObject.CompareTag("Player") && playerStats)
+        if (target != null && col.gameObject.CompareTag("Player") && playerStats)
         {
             // If a previous attack coroutine is still running, stop it
             if (attackCoroutine != null)
@@ -60,9 +60,9 @@ public class AttackingHitbox : MonoBehaviour
     }
 
 
-    private void OnTriggerExit(Collider other)
+    private void OnTriggerExit(Collider col)
     {
-        if (other.gameObject.CompareTag("Player"))
+        if (col.gameObject.CompareTag("Player"))
         {
             // If an attack coroutine is still running, stop it
             if (attackCoroutine != null)
