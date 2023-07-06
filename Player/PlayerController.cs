@@ -22,6 +22,8 @@ public class PlayerController : MonoBehaviour
     public float projectileSpellCastAnimOffsetTime = 0.4f;
     [Tooltip("How long to wait during the casting animation before the aoe is initialized. Seconds.")]
     public float aoeSpellCastAnimOffsetTime = 0.25f;
+    public int healthPotionHealingAmount = 25;
+    public int manaPotionHealingAmount = 25;
 
     private bool canMove = true;
     private bool spellCooldown = false;
@@ -32,6 +34,7 @@ public class PlayerController : MonoBehaviour
     private PlayerSpellCasting playerSpellCasting;
     private RaycastHit lastSpellTarget;
     private PlayerStats playerStats;
+    private PlayerInventory playerInventory;
 
     void Start()
     {
@@ -42,13 +45,41 @@ public class PlayerController : MonoBehaviour
         animator = GetComponent<Animator>();
         playerSpellCasting = GetComponent<PlayerSpellCasting>();
         playerStats = GetComponent<PlayerStats>();
+        playerInventory = GetComponent<PlayerInventory>();
     }
 
     void Update()
     {
         if (canMove)
         {
-            if(Input.GetButtonDown("Fire2"))
+            if (Input.GetButtonDown("HealthPotion"))
+            {
+                if (playerInventory.getHealthPotionCount() > 0 && playerStats.currentHealth < playerStats.maxHealth)
+                {
+                    playerInventory.adjustHealthPotionCount(-1);
+                    playerStats.adjustHealth(healthPotionHealingAmount);
+                    // play health potion sound
+                } else
+                {
+                    playerInventory.FlashHealthPotion(true);
+                }
+                return;
+            }
+            if (Input.GetButtonDown("ManaPotion"))
+            {
+                if (playerInventory.getManaPotionCount() > 0 && playerStats.currentMana < playerStats.maxMana)
+                {
+                    playerInventory.adjustManaPotionCount(-1);
+                    playerStats.adjustMana(manaPotionHealingAmount);
+                    // play health potion sound
+                }
+                else
+                {
+                    playerInventory.FlashHealthPotion(true);
+                }
+                return;
+            }
+            if (Input.GetButtonDown("Fire2"))
             {
                 if (spellCooldown || playerStats.currentMana < playerSpellCasting.projectileSpellCost)
                 {

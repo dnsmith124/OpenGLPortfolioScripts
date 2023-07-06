@@ -1,12 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
+using UnityEngine.UI;
 
 public class PlayerInventory : MonoBehaviour
 {
     private List<InventoryItem> inventoryItems = new List<InventoryItem>();
     [SerializeField]
     private int goldCount;
+    [SerializeField]
+    private int healthPotionCount;
+    [SerializeField]
+    private int manaPotionCount;
+
+    public GameObject healthPotionDisplay;
+    public GameObject manaPotionDisplay;
+
+    private void Start()
+    {
+        UpdatePotionCount();
+    }
 
     public void adjustGoldCount(int amount)
     {
@@ -17,6 +31,36 @@ public class PlayerInventory : MonoBehaviour
     public int getGoldCount()
     {
         return goldCount;
+    }
+
+    public void adjustHealthPotionCount(int amount)
+    {
+        healthPotionCount += amount;
+        UpdatePotionCount();
+    }
+
+    public int getHealthPotionCount()
+    {
+        return healthPotionCount;
+    }
+
+    public void FlashHealthPotion(bool healthOrMana)
+    {
+        if(healthOrMana)
+            StartCoroutine(FlashCoroutine(1f, healthPotionDisplay.GetComponent<Image>()));
+        else 
+            StartCoroutine(FlashCoroutine(1f, manaPotionDisplay.GetComponent<Image>()));
+    }
+
+    public void adjustManaPotionCount(int amount)
+    {
+        manaPotionCount += amount;
+        UpdatePotionCount();
+    }
+
+    public int getManaPotionCount()
+    {
+        return healthPotionCount;
     }
 
     // Method to add item to inventory
@@ -42,6 +86,38 @@ public class PlayerInventory : MonoBehaviour
     public List<InventoryItem> GetAllItems()
     {
         return inventoryItems;
+    }
+
+    private void UpdatePotionCount()
+    {
+        Debug.Log($"new m potion count {manaPotionCount}");
+        Debug.Log($"new h potion count {healthPotionCount}");
+        manaPotionDisplay.GetComponentInChildren<TextMeshProUGUI>().text = manaPotionCount.ToString();
+        healthPotionDisplay.GetComponentInChildren<TextMeshProUGUI>().text = healthPotionCount.ToString();
+    }
+
+    IEnumerator FlashCoroutine(float flashTime, Image image)
+    {
+        // Calculate how long one flash should take (two flashes = flash on and off)
+        float singleFlashTime = flashTime / 4f;
+
+        // Do this twice
+        for (int i = 0; i < 2; i++)
+        {
+            // Lerp color to red
+            for (float t = 0; t < 1; t += Time.deltaTime / singleFlashTime)
+            {
+                image.color = Color.Lerp(Color.white, Color.red, t);
+                yield return null;
+            }
+
+            // Lerp color back to white
+            for (float t = 0; t < 1; t += Time.deltaTime / singleFlashTime)
+            {
+                image.color = Color.Lerp(Color.red, Color.white, t);
+                yield return null;
+            }
+        }
     }
 }
 
