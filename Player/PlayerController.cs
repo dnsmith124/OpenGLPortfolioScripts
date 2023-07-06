@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 using System.Collections;
 
 public class PlayerController : MonoBehaviour
@@ -24,6 +25,9 @@ public class PlayerController : MonoBehaviour
     public float aoeSpellCastAnimOffsetTime = 0.25f;
     public int healthPotionHealingAmount = 25;
     public int manaPotionHealingAmount = 25;
+    public Image IceBoltButtonImage;
+    public Image FrostNovaButtonImage;
+
 
     private bool canMove = true;
     private bool spellCooldown = false;
@@ -61,7 +65,7 @@ public class PlayerController : MonoBehaviour
                     // play health potion sound
                 } else
                 {
-                    playerInventory.FlashHealthPotion(true);
+                    playerInventory.FlashPotion(true);
                 }
                 return;
             }
@@ -75,16 +79,22 @@ public class PlayerController : MonoBehaviour
                 }
                 else
                 {
-                    playerInventory.FlashHealthPotion(true);
+                    playerInventory.FlashPotion(false);
                 }
                 return;
             }
             if (Input.GetButtonDown("Fire2"))
             {
-                if (spellCooldown || playerStats.currentMana < playerSpellCasting.projectileSpellCost)
+                if (playerStats.currentMana < playerSpellCasting.projectileSpellCost)
+                {
+                    Debug.Log("Not enough mana");
+                    StartCoroutine(FlashCoroutine(1f, IceBoltButtonImage));
+                    return;
+                }
+                if (spellCooldown)
                 {
                     // flash mana bar red
-                    Debug.Log("CD or Not enough mana");
+                    Debug.Log("CD");
                     return;
                 }
 
@@ -100,12 +110,18 @@ public class PlayerController : MonoBehaviour
 
             if (Input.GetButtonDown("Fire3"))
             {
-                if (spellCooldown || playerStats.currentMana < playerSpellCasting.aoeSpellCost)
+                if (playerStats.currentMana < playerSpellCasting.aoeSpellCost)
                 {
-                    // flash mana bar red
-                    Debug.Log("CD or Not enough mana");
+                    Debug.Log("Not enough mana");
+                    StartCoroutine(FlashCoroutine(1f, FrostNovaButtonImage));
                     return;
                 }
+                if (spellCooldown)
+                {
+                    Debug.Log("CD");
+                    return;
+                }
+
 
                 agent.ResetPath();
                 state = State.AttackTwo;
@@ -233,6 +249,7 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator castAoeSpell(string triggerName, float animOffsetTime)
     {
+        FrostNovaButtonImage.color = Color.gray;
 
         // Trigger the animation
         animator.SetTrigger(triggerName);
@@ -247,6 +264,8 @@ public class PlayerController : MonoBehaviour
         // Wait for the animation to finish
         yield return new WaitForSeconds(animationLength - animOffsetTime);
 
+        FrostNovaButtonImage.color = Color.white;
+
         // Set state to Idling and cooldown to false
         state = State.Idling;
         spellCooldown = false;
@@ -254,6 +273,9 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator RotateAndCastProjectileSpell(RaycastHit targetHit, string triggerName, float animOffsetTime)
     {
+
+        IceBoltButtonImage.color = Color.gray;
+
         // Find the vector pointing from the GameObject to the hit point
         Vector3 targetDirection = targetHit.point - transform.position;
         targetDirection.Normalize();
@@ -275,10 +297,34 @@ public class PlayerController : MonoBehaviour
         // Wait for the animation to finish
         yield return new WaitForSeconds(animationLength - animOffsetTime);
 
+        IceBoltButtonImage.color = Color.white;
+
         // Set state to Idling and cooldown to false
         state = State.Idling;
         spellCooldown = false;
     }
 
+    IEnumerator FlashCoroutine(float flashTime, Image image)
+    {
+        // Calculate how long one flash should take (two flashes = flash on and off)
+        float singleFlashTime = flashTime / 4f;
 
+        // Do this twice
+        for (int i = 0; i < 2; i++)
+        {
+            // Lerp color to red
+            for (float t = 0; t < 1; t += Time.deltaTime / singleFlashTime)
+            {
+                image.color = Color.Lerp(Color.white, Color.red, t);
+                yield return null;
+            }
+
+            // Lerp color back to white
+            for (float t = 0; t < 1; t += Time.deltaTime / singleFlashTime)
+            {
+                image.color = Color.Lerp(Color.red, Color.white, t);
+                yield return null;
+            }
+        }
+    }
 }

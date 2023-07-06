@@ -44,7 +44,7 @@ public class PlayerInventory : MonoBehaviour
         return healthPotionCount;
     }
 
-    public void FlashHealthPotion(bool healthOrMana)
+    public void FlashPotion(bool healthOrMana)
     {
         if(healthOrMana)
             StartCoroutine(FlashCoroutine(1f, healthPotionDisplay.GetComponent<Image>()));
@@ -60,7 +60,7 @@ public class PlayerInventory : MonoBehaviour
 
     public int getManaPotionCount()
     {
-        return healthPotionCount;
+        return manaPotionCount;
     }
 
     // Method to add item to inventory
