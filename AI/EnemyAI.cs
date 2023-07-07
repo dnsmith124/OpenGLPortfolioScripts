@@ -26,8 +26,6 @@ public class EnemyAI : MonoBehaviour
     public float attackDamageDelay = 1.0f;
     public float randomDropOffset = 2.0f;
 
-    public List<GameObject> drops;
-
     private int currentHealth;
     public int maxHealth = 100;
     public Slider healthBar;
@@ -42,13 +40,13 @@ public class EnemyAI : MonoBehaviour
     private ReceivingHitbox receivingHitbox;
     private float initialColliderRadius;
 
+    private DropManager dropManager;
+
     private bool isAttacking;
     private bool isDying;
 
     private void Start()
     {
-
-
         target = GameObject.FindGameObjectWithTag("Player").transform;
         playerStats = target.GetComponent<PlayerStats>();
         agent = GetComponent<NavMeshAgent>();
@@ -73,6 +71,8 @@ public class EnemyAI : MonoBehaviour
 
         receivingHitbox = gameObject.GetComponentInChildren<ReceivingHitbox>();
         receivingCollider = receivingHitbox.GetComponent<CapsuleCollider>();
+
+        dropManager = GetComponent<DropManager>();
 
         isAttacking = false;
         isDying = false;
@@ -325,25 +325,11 @@ public class EnemyAI : MonoBehaviour
 
         // Insert some sort of fade or something here
 
-        // Let the body lie there for half the duration of the animation
-        yield return new WaitForSeconds(animationLength / 2);
+        // Let the body lie there for a moment
+        yield return new WaitForSeconds(0.5f);
 
         // Insert Drop code here (gold, xp gain etc)
-        foreach (var drop in drops)
-        {
-            Vector3 randomizedPosition = transform.position + new Vector3(Random.Range(-randomDropOffset, randomDropOffset), 0, Random.Range(-randomDropOffset, randomDropOffset));
-
-            Instantiate(drop, randomizedPosition, transform.rotation);
-             randomizedPosition = transform.position + new Vector3(Random.Range(-randomDropOffset, randomDropOffset), 0, Random.Range(-randomDropOffset, randomDropOffset));
-
-            Instantiate(drop, randomizedPosition, transform.rotation);
-             randomizedPosition = transform.position + new Vector3(Random.Range(-randomDropOffset, randomDropOffset), 0, Random.Range(-randomDropOffset, randomDropOffset));
-
-            Instantiate(drop, randomizedPosition, transform.rotation);
-             randomizedPosition = transform.position + new Vector3(Random.Range(-randomDropOffset, randomDropOffset), 0, Random.Range(-randomDropOffset, randomDropOffset));
-
-            Instantiate(drop, randomizedPosition, transform.rotation);
-        }
+        dropManager.GenerateDrops();
 
         Die();
     }

@@ -10,6 +10,7 @@ public class GameController : MonoBehaviour
     public bool isAIEnabled;
     public bool isPaused;
     public int gameDifficulty;
+    private CanvasGroup pauseScreen;
 
     public Dictionary<string, bool> conditions = new Dictionary<string, bool>();
 
@@ -29,6 +30,9 @@ public class GameController : MonoBehaviour
         }
 
         InitConditions();
+
+        pauseScreen = GameObject.FindGameObjectWithTag("PauseScreen").GetComponent<CanvasGroup>();
+        pauseScreen.alpha = 0;
     }
 
     void Update()
@@ -38,10 +42,12 @@ public class GameController : MonoBehaviour
             if (isPaused)
             {
                 ResumeGame();
+                pauseScreen.alpha = 0;
             }
             else
             {
                 PauseGame();
+                pauseScreen.alpha = 1;
             }
         }
     }
@@ -85,13 +91,11 @@ public class GameController : MonoBehaviour
     {
         Time.timeScale = 0f;
         isPaused = true;
-        // bring up pause menu here
     }
 
     public void ResumeGame()
     {
         Time.timeScale = 1f;
         isPaused = false;
-        // hide pause menu here
     }
 }

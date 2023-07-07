@@ -7,6 +7,7 @@ public class InventoryManager : MonoBehaviour
 {
     public PlayerInventory playerInventory;
     public GameObject uiParent;
+    public GameObject uiItemsPanel;
     public GameObject uiItemPrefab;
     private bool isOpen;
 
@@ -32,7 +33,6 @@ public class InventoryManager : MonoBehaviour
     {
         UpdateUI();
         isOpen = true;
-        Debug.Log(uiParent.activeInHierarchy);
         uiParent.SetActive(true);
         GameController.Instance.PauseGame();
     }
@@ -47,7 +47,7 @@ public class InventoryManager : MonoBehaviour
     private void UpdateUI()
     {
         // First, clear out any existing child objects
-        foreach (Transform child in uiParent.transform)
+        foreach (Transform child in uiItemsPanel.transform)
         {
             Destroy(child.gameObject);
         }
@@ -56,13 +56,13 @@ public class InventoryManager : MonoBehaviour
         List<InventoryItem> inventoryItems = playerInventory.GetAllItems();
         foreach (InventoryItem item in inventoryItems)
         {
-            GameObject uiItem = Instantiate(uiItemPrefab, uiParent.transform);
+            GameObject uiItem = Instantiate(uiItemPrefab, uiItemsPanel.transform);
 
             // Set image from itemImage
-            Image uiImage = uiItem.GetComponentInChildren<Image>();
-            if (uiImage != null)
+            Image[] uiImages = uiItem.GetComponentsInChildren<Image>();
+            if (uiImages[1] != null)
             {
-                uiImage.sprite = item.itemImage;
+                uiImages[1].sprite = item.itemImage;
             }
 
             // Set text from itemName and description

@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 public class PlayerInventory : MonoBehaviour
 {
+    [SerializeField]
     private List<InventoryItem> inventoryItems = new List<InventoryItem>();
     [SerializeField]
     private int goldCount;
@@ -16,6 +17,15 @@ public class PlayerInventory : MonoBehaviour
 
     public GameObject healthPotionDisplay;
     public GameObject manaPotionDisplay;
+    public TextMeshProUGUI healthPotionInvCount;
+    public TextMeshProUGUI manaPotionInvCount;
+    public TextMeshProUGUI goldInvCount;
+    public CanvasGroup pickupChimePanel;
+    public float pickupChimeDelayTime = 2.0f;
+    public float pickupChimeFadeDuration = 1.0f;
+
+    private Queue<string> pickupQueue = new Queue<string>();
+    private bool isShowingChime = false;
 
     private void Start()
     {
@@ -24,7 +34,17 @@ public class PlayerInventory : MonoBehaviour
 
     public void adjustGoldCount(int amount)
     {
+        if (amount > 0)
+        {
+            pickupQueue.Enqueue($"{amount} gold");
+
+            if (!isShowingChime)
+            {
+                StartCoroutine(HandlePickupChimeToggle());
+            }
+        }
         goldCount += amount;
+        goldInvCount.text = goldCount.ToString();
         Debug.Log($"New gold count: {goldCount}");
     }
 
@@ -35,6 +55,15 @@ public class PlayerInventory : MonoBehaviour
 
     public void adjustHealthPotionCount(int amount)
     {
+        if (amount > 0)
+        {
+            pickupQueue.Enqueue("Health Potion");
+
+            if (!isShowingChime)
+            {
+                StartCoroutine(HandlePickupChimeToggle());
+            }
+        }
         healthPotionCount += amount;
         UpdatePotionCount();
     }
@@ -54,6 +83,16 @@ public class PlayerInventory : MonoBehaviour
 
     public void adjustManaPotionCount(int amount)
     {
+        if (amount > 0)
+        {
+            pickupQueue.Enqueue("Mana Potion");
+
+            if (!isShowingChime)
+            {
+                StartCoroutine(HandlePickupChimeToggle());
+            }
+        }
+
         manaPotionCount += amount;
         UpdatePotionCount();
     }
@@ -67,7 +106,12 @@ public class PlayerInventory : MonoBehaviour
     public void AddItem(InventoryItem item)
     {
         inventoryItems.Add(item);
-        Debug.Log($"Adding item {item.itemName}");
+        pickupQueue.Enqueue(item.name);
+
+        if (!isShowingChime)
+        {
+            StartCoroutine(HandlePickupChimeToggle());
+        }
     }
 
     // Method to remove item from inventory
@@ -90,10 +134,10 @@ public class PlayerInventory : MonoBehaviour
 
     private void UpdatePotionCount()
     {
-        Debug.Log($"new m potion count {manaPotionCount}");
-        Debug.Log($"new h potion count {healthPotionCount}");
         manaPotionDisplay.GetComponentInChildren<TextMeshProUGUI>().text = manaPotionCount.ToString();
+        manaPotionInvCount.text = manaPotionCount.ToString();
         healthPotionDisplay.GetComponentInChildren<TextMeshProUGUI>().text = healthPotionCount.ToString();
+        healthPotionInvCount.text = healthPotionCount.ToString();
     }
 
     IEnumerator FlashCoroutine(float flashTime, Image image)
@@ -118,6 +162,39 @@ public class PlayerInventory : MonoBehaviour
                 yield return null;
             }
         }
+    }
+
+    private IEnumerator HandlePickupChimeToggle()
+    {
+        isShowingChime = true;
+
+        while (pickupQueue.Count > 0)
+        {
+            string name = pickupQueue.Dequeue();
+
+            pickupChimePanel.GetComponentInChildren<TextMeshProUGUI>().text = $"Picked up {name}.";
+
+            // Fade in
+            for (float t = 0; t < pickupChimeFadeDuration; t += Time.deltaTime)
+            {
+                pickupChimePanel.alpha = t / pickupChimeFadeDuration;
+                yield return null;
+            }
+            pickupChimePanel.alpha = 1;
+
+            // wait
+            yield return new WaitForSeconds(pickupChimeDelayTime);
+
+            // Fade out
+            for (float t = 0; t < pickupChimeFadeDuration; t += Time.deltaTime)
+            {
+                pickupChimePanel.alpha = 1 - (t / pickupChimeFadeDuration);
+                yield return null;
+            }
+            pickupChimePanel.alpha = 0;
+        }
+
+        isShowingChime = false;
     }
 }
 
