@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 using System.Collections;
 
 public class PlayerController : MonoBehaviour
@@ -18,12 +19,15 @@ public class PlayerController : MonoBehaviour
     public float speed = 3.5f;
     [Tooltip("Determines how fast the player can rotate while walking.")]
     public float rotationSpeed = 10f;
-    [Tooltip("Determines how fast the player rotates to the target of a spell cast when pressed.")]
-    public float spellCastRotationSpeed = 10f;
     [Tooltip("How long to wait during the casting animation before the projectile is initialized. Seconds.")]
     public float projectileSpellCastAnimOffsetTime = 0.4f;
     [Tooltip("How long to wait during the casting animation before the aoe is initialized. Seconds.")]
     public float aoeSpellCastAnimOffsetTime = 0.25f;
+    public int healthPotionHealingAmount = 25;
+    public int manaPotionHealingAmount = 25;
+    public Image IceBoltButtonImage;
+    public Image FrostNovaButtonImage;
+
 
     private bool canMove = true;
     private bool spellCooldown = false;
@@ -34,6 +38,7 @@ public class PlayerController : MonoBehaviour
     private PlayerSpellCasting playerSpellCasting;
     private RaycastHit lastSpellTarget;
     private PlayerStats playerStats;
+    private PlayerInventory playerInventory;
 
     void Start()
     {
@@ -44,18 +49,52 @@ public class PlayerController : MonoBehaviour
         animator = GetComponent<Animator>();
         playerSpellCasting = GetComponent<PlayerSpellCasting>();
         playerStats = GetComponent<PlayerStats>();
+        playerInventory = GetComponent<PlayerInventory>();
     }
 
     void Update()
     {
         if (canMove)
         {
-            if(Input.GetButtonDown("Fire2"))
+            if (Input.GetButtonDown("HealthPotion"))
             {
-                if (spellCooldown || playerStats.currentMana < playerSpellCasting.projectileSpellCost)
+                if (playerInventory.getHealthPotionCount() > 0 && playerStats.currentHealth < playerStats.maxHealth)
+                {
+                    playerInventory.adjustHealthPotionCount(-1);
+                    playerStats.adjustHealth(healthPotionHealingAmount);
+                    // play health potion sound
+                } else
+                {
+                    playerInventory.FlashPotion(true);
+                }
+                return;
+            }
+            if (Input.GetButtonDown("ManaPotion"))
+            {
+                if (playerInventory.getManaPotionCount() > 0 && playerStats.currentMana < playerStats.maxMana)
+                {
+                    playerInventory.adjustManaPotionCount(-1);
+                    playerStats.adjustMana(manaPotionHealingAmount);
+                    // play health potion sound
+                }
+                else
+                {
+                    playerInventory.FlashPotion(false);
+                }
+                return;
+            }
+            if (Input.GetButtonDown("Fire2"))
+            {
+                if (playerStats.currentMana < playerSpellCasting.projectileSpellCost)
+                {
+                    Debug.Log("Not enough mana");
+                    StartCoroutine(FlashCoroutine(1f, IceBoltButtonImage));
+                    return;
+                }
+                if (spellCooldown)
                 {
                     // flash mana bar red
-                    Debug.Log("CD or Not enough mana");
+                    Debug.Log("CD");
                     return;
                 }
 
@@ -71,12 +110,18 @@ public class PlayerController : MonoBehaviour
 
             if (Input.GetButtonDown("Fire3"))
             {
-                if (spellCooldown || playerStats.currentMana < playerSpellCasting.aoeSpellCost)
+                if (playerStats.currentMana < playerSpellCasting.aoeSpellCost)
                 {
-                    // flash mana bar red
-                    Debug.Log("CD or Not enough mana");
+                    Debug.Log("Not enough mana");
+                    StartCoroutine(FlashCoroutine(1f, FrostNovaButtonImage));
                     return;
                 }
+                if (spellCooldown)
+                {
+                    Debug.Log("CD");
+                    return;
+                }
+
 
                 agent.ResetPath();
                 state = State.AttackTwo;
@@ -188,7 +233,7 @@ public class PlayerController : MonoBehaviour
     private void HandleAttackOne()
     {
         spellCooldown = true;
-        StartCoroutine(RotateAndCastProjectileSpell(lastSpellTarget, spellCastRotationSpeed, "AttackOne", projectileSpellCastAnimOffsetTime));
+        StartCoroutine(RotateAndCastProjectileSpell(lastSpellTarget, "AttackOne", projectileSpellCastAnimOffsetTime));
     }
 
     private void HandleAttackTwo()
@@ -204,6 +249,7 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator castAoeSpell(string triggerName, float animOffsetTime)
     {
+        FrostNovaButtonImage.color = Color.gray;
 
         // Trigger the animation
         animator.SetTrigger(triggerName);
@@ -218,32 +264,25 @@ public class PlayerController : MonoBehaviour
         // Wait for the animation to finish
         yield return new WaitForSeconds(animationLength - animOffsetTime);
 
+        FrostNovaButtonImage.color = Color.white;
+
         // Set state to Idling and cooldown to false
         state = State.Idling;
         spellCooldown = false;
     }
 
-    private IEnumerator RotateAndCastProjectileSpell(RaycastHit targetHit, float rotationSpeed, string triggerName, float animOffsetTime)
+    private IEnumerator RotateAndCastProjectileSpell(RaycastHit targetHit, string triggerName, float animOffsetTime)
     {
+
+        IceBoltButtonImage.color = Color.gray;
+
         // Find the vector pointing from the GameObject to the hit point
         Vector3 targetDirection = targetHit.point - transform.position;
+        targetDirection.Normalize();
 
-        Quaternion targetRotation = Quaternion.LookRotation(targetDirection - transform.position);
+        Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
 
-        int cycles = 0;
-        
-
-        // rotate until we're within 3 degrees of the target
-        while (Quaternion.Angle(transform.rotation, targetRotation) > 5f )
-        {
-            // break after a certain number of cycles have been reached (to prevent infinite wait here)
-            if (cycles > 150)
-                break;
-
-            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
-            cycles++;
-            yield return null;
-        }
+        transform.rotation = targetRotation;
 
         // Trigger the animation
         animator.SetTrigger(triggerName);
@@ -258,10 +297,34 @@ public class PlayerController : MonoBehaviour
         // Wait for the animation to finish
         yield return new WaitForSeconds(animationLength - animOffsetTime);
 
+        IceBoltButtonImage.color = Color.white;
+
         // Set state to Idling and cooldown to false
         state = State.Idling;
         spellCooldown = false;
     }
 
+    IEnumerator FlashCoroutine(float flashTime, Image image)
+    {
+        // Calculate how long one flash should take (two flashes = flash on and off)
+        float singleFlashTime = flashTime / 4f;
 
+        // Do this twice
+        for (int i = 0; i < 2; i++)
+        {
+            // Lerp color to red
+            for (float t = 0; t < 1; t += Time.deltaTime / singleFlashTime)
+            {
+                image.color = Color.Lerp(Color.white, Color.red, t);
+                yield return null;
+            }
+
+            // Lerp color back to white
+            for (float t = 0; t < 1; t += Time.deltaTime / singleFlashTime)
+            {
+                image.color = Color.Lerp(Color.red, Color.white, t);
+                yield return null;
+            }
+        }
+    }
 }

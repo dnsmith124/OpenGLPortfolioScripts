@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 
 public class EnemyAI : MonoBehaviour
 {
@@ -23,6 +24,7 @@ public class EnemyAI : MonoBehaviour
     public int attackDamage = 25;
     [Tooltip("Time before damage takes place in an animation.")]
     public float attackDamageDelay = 1.0f;
+    public float randomDropOffset = 2.0f;
 
     private int currentHealth;
     public int maxHealth = 100;
@@ -30,23 +32,21 @@ public class EnemyAI : MonoBehaviour
     private GameObject healthBarObject;
 
     private NavMeshAgent agent;
-    //private float attackTimer;
     private Animator animator;
     private Camera mainCamera;
     private CapsuleCollider attackCollider;
+    private AttackingHitbox attackingHitbox;
+    private CapsuleCollider receivingCollider;
+    private ReceivingHitbox receivingHitbox;
     private float initialColliderRadius;
 
+    private DropManager dropManager;
+
     private bool isAttacking;
-    private Coroutine attackCoroutine;
+    private bool isDying;
 
     private void Start()
     {
-        attackCollider = GetComponent<CapsuleCollider>();
-        attackCollider.enabled = false;
-        initialColliderRadius = attackCollider.radius;
-
-        isAttacking = false;
-
         target = GameObject.FindGameObjectWithTag("Player").transform;
         playerStats = target.GetComponent<PlayerStats>();
         agent = GetComponent<NavMeshAgent>();
@@ -63,10 +63,29 @@ public class EnemyAI : MonoBehaviour
 
         ChangeState(State.Idling);
 
+        attackingHitbox = gameObject.GetComponentInChildren<AttackingHitbox>();
+        attackingHitbox.initAttackingHitbox(attackDamage, playerStats, target, attackDamageDelay, attackRange);
+        attackCollider = attackingHitbox.GetComponent<CapsuleCollider>();
+        attackCollider.enabled = false;
+        initialColliderRadius = attackCollider.radius;
+
+        receivingHitbox = gameObject.GetComponentInChildren<ReceivingHitbox>();
+        receivingCollider = receivingHitbox.GetComponent<CapsuleCollider>();
+
+        dropManager = GetComponent<DropManager>();
+
+        isAttacking = false;
+        isDying = false;
     }
 
     private void Update()
     {
+        if(isDying)
+        {
+            HandleDying();
+            return;
+        }
+
         if (GameController.Instance.isAIEnabled)
         {
             float distanceToTarget = Vector3.Distance(target.position, transform.position);
@@ -78,6 +97,11 @@ public class EnemyAI : MonoBehaviour
 
                 case State.Walking:
                     HandleWalking(distanceToTarget);
+                    break;
+
+                case State.TakingDamage:
+                    if (!isAttacking)
+                        HandleTakingDamage();
                     break;
 
                 case State.Attacking:
@@ -143,6 +167,7 @@ public class EnemyAI : MonoBehaviour
     private void HandleDying()
     {
         agent.ResetPath();
+        isDying = true;
         StartCoroutine(TriggerDyingAnimAndCleanup());
     }
 
@@ -191,48 +216,6 @@ public class EnemyAI : MonoBehaviour
 
     }
 
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.CompareTag("Player") && playerStats)
-        {
-            // If a previous attack coroutine is still running, stop it
-            if (attackCoroutine != null)
-            {
-                StopCoroutine(attackCoroutine);
-            }
-
-            // Start a new attack coroutine
-            attackCoroutine = StartCoroutine(DealDamageAfterDelay(attackDamageDelay)); 
-        }
-    }
-
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.gameObject.CompareTag("Player"))
-        {
-            // If an attack coroutine is still running, stop it
-            if (attackCoroutine != null)
-            {
-                StopCoroutine(attackCoroutine);
-                attackCoroutine = null;
-            }
-        }
-    }
-
-
-    private IEnumerator DealDamageAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        // If the player is still within range, apply damage
-        if (Vector3.Distance(target.position, transform.position) <= attackRange)
-        {
-            playerStats.adjustHealth(-attackDamage);
-        }
-    }
-
     private void HandleIdling(float distanceToTarget)
     {
         if (distanceToTarget <= chaseRange && distanceToTarget > attackRange)
@@ -265,9 +248,49 @@ public class EnemyAI : MonoBehaviour
         agent.SetDestination(target.position);
     }
 
+    private void HandleTakingDamage()
+    {
+        agent.ResetPath();
+        StartCoroutine(TriggerDamage());
+    }
+
+    private IEnumerator TriggerDamage()
+    {
+        // animation triggered in ChangeState above
+
+        // get the length of the triggered animation
+        float animationLength = AnimationUtils.GetAnimationClipLength(animator, "Damaging");
+
+        // Wait for the animation to finish
+        yield return new WaitForSeconds(animationLength);
+
+        // Check distance to player
+        float distanceToTarget = Vector3.Distance(target.position, transform.position);
+
+        chaseRange *= 10.0f;
+
+        State stateToRevertTo = State.Idling;
+        if (distanceToTarget <= chaseRange && distanceToTarget > attackRange)
+        {
+            // If player is within chase range but outside attack range, start walking
+            stateToRevertTo = State.Walking;
+        }
+        if (distanceToTarget <= attackRange)
+        {
+            // If player is within chase range but outside attack range, start walking
+            stateToRevertTo = State.Attacking;
+        }
+
+        // Set state
+        ChangeState(stateToRevertTo);
+
+    }
+
     public void TakeDamage(int damage)
     {
         agent.ResetPath();
+        attackingHitbox.KillAttackingCoroutine(false);
+
         currentHealth -= damage;
         healthBar.value = currentHealth;
 
@@ -282,15 +305,16 @@ public class EnemyAI : MonoBehaviour
         }
         else
         {
-            animator.SetTrigger("Damaging");
-            ChangeState(State.Idling);
+            ChangeState(State.TakingDamage);
         }
     }
 
     private IEnumerator TriggerDyingAnimAndCleanup()
     {
         attackCollider.enabled = false;
+        receivingCollider.enabled = false;
         healthBarObject.SetActive(false);
+        attackingHitbox.KillAttackingCoroutine(true);
 
         // get the length of the triggered animation
         float animationLength = AnimationUtils.GetAnimationClipLength(animator, "Death");
@@ -301,10 +325,11 @@ public class EnemyAI : MonoBehaviour
 
         // Insert some sort of fade or something here
 
-        // Let the body lie there for the duration of the animation
-        yield return new WaitForSeconds(animationLength);
+        // Let the body lie there for a moment
+        yield return new WaitForSeconds(0.5f);
 
         // Insert Drop code here (gold, xp gain etc)
+        dropManager.GenerateDrops();
 
         Die();
     }

@@ -44,14 +44,16 @@ public class ProjectileSpellBehavior : MonoBehaviour
 
     private void OnTriggerEnter(Collider col)
     {
-        // if we hit the player, return
-        if(col.GetComponent<PlayerController>())
+        // if we hit something we shouldn't, return
+        if(col.GetComponent<PlayerController>() || col.GetComponent<AttackingHitbox>() || col.GetComponent<NPCDialogue>())
         {
             return;
         }
 
         GameObject hitFX;
-        hitFX = Instantiate(FXHit, col.transform.position, Quaternion.identity);
+        Vector3 alteredPosition = col.transform.position;
+        alteredPosition.y += 1;
+        hitFX = Instantiate(FXHit, alteredPosition, Quaternion.identity);
         Destroy(hitFX, 3f);
 
         fXProjectileBaseParticles.gameObject.SetActive(false);
@@ -64,14 +66,12 @@ public class ProjectileSpellBehavior : MonoBehaviour
         moveSpeed = 0f;
         projectileCollider.enabled = false;
 
-        // If the collided object is an enemy
-        EnemyAI enemy = col.GetComponent<EnemyAI>(); 
-        if (enemy != null) 
+        if (col.GetComponent<ReceivingHitbox>())
         {
-            enemy.TakeDamage(damage);
+            col.GetComponentInParent<EnemyAI>().TakeDamage(damage);
         }
 
-        Destroy(gameObject, 3f);
+        Destroy(gameObject, 2f);
     }
 
 }
