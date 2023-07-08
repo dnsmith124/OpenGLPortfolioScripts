@@ -99,10 +99,10 @@ public class DialogueManager : MonoBehaviour
 
         switch (parts[0])
         {
-            case "Strength":
-                return playerStats.Strength >= int.Parse(parts[1]);
-            case "Intelligence":
-                return playerStats.Intelligence >= int.Parse(parts[1]);
+            //case "Strength":
+            //    return playerStats.Strength >= int.Parse(parts[1]);
+            //case "Intelligence":
+            //    return playerStats.Intelligence >= int.Parse(parts[1]);
             // ... other cases ...
             default:
                 return false;

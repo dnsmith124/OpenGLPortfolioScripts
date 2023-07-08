@@ -9,6 +9,8 @@ public class PlayerInventory : MonoBehaviour
     [SerializeField]
     private List<InventoryItem> inventoryItems = new List<InventoryItem>();
     [SerializeField]
+    private List<InventoryItem> equippedItems = new List<InventoryItem>();
+    [SerializeField]
     private int goldCount;
     [SerializeField]
     private int healthPotionCount;
@@ -23,6 +25,8 @@ public class PlayerInventory : MonoBehaviour
     public CanvasGroup pickupChimePanel;
     public float pickupChimeDelayTime = 2.0f;
     public float pickupChimeFadeDuration = 1.0f;
+    private PlayerStats playerStats;
+
 
     private Queue<string> pickupQueue = new Queue<string>();
     private bool isShowingChime = false;
@@ -30,6 +34,7 @@ public class PlayerInventory : MonoBehaviour
     private void Start()
     {
         UpdatePotionCount();
+        playerStats = GetComponent<PlayerStats>();
     }
 
     public void adjustGoldCount(int amount)
@@ -106,7 +111,7 @@ public class PlayerInventory : MonoBehaviour
     public void AddItem(InventoryItem item)
     {
         inventoryItems.Add(item);
-        pickupQueue.Enqueue(item.name);
+        pickupQueue.Enqueue(item.itemName);
 
         if (!isShowingChime)
         {
@@ -130,6 +135,28 @@ public class PlayerInventory : MonoBehaviour
     public List<InventoryItem> GetAllItems()
     {
         return inventoryItems;
+    }
+
+    public void AddEquippedItem(InventoryItem item)
+    {
+        equippedItems.Add(item);
+        playerStats.UpdateStatsBasedOnEquipment();
+    }
+
+    public void RemoveEquippedItem(InventoryItem item)
+    {
+        equippedItems.Remove(item);
+        playerStats.UpdateStatsBasedOnEquipment();
+    }
+
+    public bool HasEquippedItem(InventoryItem item)
+    {
+        return equippedItems.Contains(item);
+    }
+
+    public List<InventoryItem> GetAllEquippedItems()
+    {
+        return equippedItems;
     }
 
     private void UpdatePotionCount()
@@ -196,5 +223,6 @@ public class PlayerInventory : MonoBehaviour
 
         isShowingChime = false;
     }
+
 }
 

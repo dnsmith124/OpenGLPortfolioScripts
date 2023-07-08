@@ -93,7 +93,6 @@ public class PlayerController : MonoBehaviour
                 }
                 if (spellCooldown)
                 {
-                    // flash mana bar red
                     Debug.Log("CD");
                     return;
                 }
