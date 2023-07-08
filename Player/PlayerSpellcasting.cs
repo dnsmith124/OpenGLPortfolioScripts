@@ -48,8 +48,8 @@ public class PlayerSpellCasting : MonoBehaviour
             
             if (hitCollider.gameObject.GetComponent<ReceivingHitbox>())
             {
-                hitCollider.GetComponentInParent<EnemyAI>().TakeDamage(aoeSpellDamage);
-                Debug.Log($"{hitCollider.gameObject.name} Takes Damage");
+                //hitCollider.GetComponentInParent<EnemyAI>().TakeDamage(aoeSpellDamage);
+                hitCollider.GetComponentInParent<EnemyAI>().Freeze(3f);
             }
         }
         playerStats.adjustMana(-aoeSpellCost);

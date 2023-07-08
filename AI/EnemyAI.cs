@@ -12,7 +12,8 @@ public class EnemyAI : MonoBehaviour
         Walking,
         Attacking,
         TakingDamage,
-        Dying
+        Dying,
+        Frozen
     }
 
     public State state;
@@ -40,9 +41,14 @@ public class EnemyAI : MonoBehaviour
     private ReceivingHitbox receivingHitbox;
     private float initialColliderRadius;
 
+    private float frozenTime;
+    private FreezeController freezeController;
+    private State preFrozenState;
+
     private DropManager dropManager;
 
     private bool isAttacking;
+    private bool isFrozen;
     private bool isDying;
 
     private void Start()
@@ -75,7 +81,10 @@ public class EnemyAI : MonoBehaviour
         dropManager = GetComponent<DropManager>();
 
         isAttacking = false;
+        isFrozen = false;
         isDying = false;
+
+        freezeController = GetComponentInChildren<FreezeController>();
     }
 
     private void Update()
@@ -89,6 +98,7 @@ public class EnemyAI : MonoBehaviour
         if (GameController.Instance.isAIEnabled)
         {
             float distanceToTarget = Vector3.Distance(target.position, transform.position);
+            //Debug.Log(state);
             switch (state)
             {
                 case State.Idling:
@@ -96,12 +106,18 @@ public class EnemyAI : MonoBehaviour
                     break;
 
                 case State.Walking:
-                    HandleWalking(distanceToTarget);
+                    if (!isFrozen)
+                        HandleWalking(distanceToTarget);
                     break;
 
                 case State.TakingDamage:
-                    if (!isAttacking)
+                    if (!isAttacking && !isFrozen)
                         HandleTakingDamage();
+                    break;
+
+                case State.Frozen:
+                    if(!isFrozen)
+                        HandleFrozen(frozenTime);
                     break;
 
                 case State.Attacking:
@@ -142,6 +158,8 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
+        Debug.Log(newState);
+
         state = newState;
 
         switch (state)
@@ -153,7 +171,11 @@ public class EnemyAI : MonoBehaviour
                 animator.SetTrigger("Walking");
                 break;
             case State.TakingDamage:
-                animator.SetTrigger("Damaging");
+                if(!isFrozen)
+                    animator.SetTrigger("Damaging");
+                break;
+            case State.Frozen:
+                //animator.SetTrigger("Freezing");
                 break;
             case State.Attacking:
                 //animator trigger handled in HandleAttacking()=>TriggerAttack()
@@ -187,6 +209,7 @@ public class EnemyAI : MonoBehaviour
 
         // Trigger the animation
         animator.SetTrigger("Attacking");
+        Debug.Log("attack anim start");
 
         // get the length of the triggered animation
         float animationLength = AnimationUtils.GetAnimationClipLength(animator, "Attacking");
@@ -209,6 +232,7 @@ public class EnemyAI : MonoBehaviour
             // If player is within chase range but outside attack range, start walking
             stateToRevertTo = State.Walking;
         }
+        Debug.Log("state reversion");
 
         // Set state
         ChangeState(stateToRevertTo);
@@ -244,6 +268,8 @@ public class EnemyAI : MonoBehaviour
             ChangeState(State.Idling);
             return;
         }
+
+        //Debug.Log("setting destination");
 
         agent.SetDestination(target.position);
     }
@@ -307,6 +333,38 @@ public class EnemyAI : MonoBehaviour
         {
             ChangeState(State.TakingDamage);
         }
+    }
+
+    public void Freeze(float time)
+    {
+        Debug.Log("Freeze");
+        attackingHitbox.KillAttackingCoroutine(false);
+        frozenTime = time;
+        preFrozenState = state;
+        ChangeState(State.Frozen);
+        chaseRange *= 10.0f;
+    }
+
+    private void HandleFrozen(float time)
+    {
+        agent.ResetPath();
+        attackingHitbox.KillAttackingCoroutine(false);
+        StartCoroutine(TriggerFrozen(time));
+    }
+
+    private IEnumerator TriggerFrozen(float time)
+    {
+        isFrozen = true;
+
+        freezeController.AssignFrozenMaterial();
+        float initialSpeed = animator.speed;
+        animator.speed = 0;
+        yield return new WaitForSeconds(time);
+        freezeController.RevertMaterial();
+        ChangeState(preFrozenState);
+        Debug.Log($"Revert to state {preFrozenState}");
+        isFrozen = false;
+        animator.speed = initialSpeed;
     }
 
     private IEnumerator TriggerDyingAnimAndCleanup()

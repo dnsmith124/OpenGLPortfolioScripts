@@ -1,7 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "UniversalDropsData", menuName = "DropManager/UniversalDropsData", order = 1)]
-public class UniversalDropsData : ScriptableObject
+public class UniversalDropsData : MonoBehaviour
 {
     public static UniversalDropsData Instance;
     public Drop[] universalDrops; 
@@ -16,6 +15,11 @@ public class UniversalDropsData : ScriptableObject
         {
             Debug.LogError("Multiple instances of UniversalDropsData. Only one instance is allowed");
         }
+    }
+
+    public Drop[] GetUniversalDrops()
+    {
+        return universalDrops;
     }
 
 }
