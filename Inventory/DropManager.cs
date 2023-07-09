@@ -9,7 +9,8 @@ public class DropManager : MonoBehaviour
     // Call this method when you want to generate drops
     public void GenerateDrops()
     {
-        foreach (Drop uniDrop in UniversalDropsData.Instance.universalDrops)
+        // universal drops are held on the GameController object
+        foreach (Drop uniDrop in UniversalDropsData.Instance.GetUniversalDrops())
         {
             if (Random.value < uniDrop.dropRate)
             {
