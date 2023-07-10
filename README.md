@@ -2,7 +2,7 @@
 
 ## Project Status
 
-This project is currently in development. My portfolio site will have a normal, flat site for browsing examples of my work, but also will feature an interactive version that takes the form of a short action roleplaying game in the style of Blizzard Entertainment's Diablo. These scripts run the features of that game. 
+This project is currently in development. My portfolio site has a normal, flat site for browsing examples of my work, but also will feature an interactive version that takes the form of a short action roleplaying game in the style of Blizzard Entertainment's Diablo. These scripts run the features of that game. 
 
 ## Feature Roadmap
 
