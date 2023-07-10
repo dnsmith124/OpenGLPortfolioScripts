@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class ProjectileSpellBehavior : MonoBehaviour
 {
-    public float maxTravelTime = 10f; // Maximum travel distance
-    public float disappearDelay = 2f; // Delay before disappearing after collision
+    public float maxTravelTime = 10f;
+    public float disappearDelay = 2f;
     public float moveSpeed;
 
     public GameObject FXHit;

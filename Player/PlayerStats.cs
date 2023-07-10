@@ -81,6 +81,11 @@ public class PlayerStats : MonoBehaviour
         currentMana += value;
     }
 
+    public int GetSpellPower()
+    {
+        return spellPower;
+    }
+
     void handleUpdateUISliders()
     {
         healthSlider.value = currentHealth;

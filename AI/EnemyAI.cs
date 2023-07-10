@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
 using System.Collections;
-using System.Collections.Generic;
 
 public class EnemyAI : MonoBehaviour
 {
@@ -33,7 +32,7 @@ public class EnemyAI : MonoBehaviour
     private GameObject healthBarObject;
 
     private NavMeshAgent agent;
-    private Animator animator;
+    protected Animator animator;
     private Camera mainCamera;
     private CapsuleCollider attackCollider;
     private AttackingHitbox attackingHitbox;
@@ -47,8 +46,8 @@ public class EnemyAI : MonoBehaviour
 
     private DropManager dropManager;
 
-    private bool isAttacking;
-    private bool isFrozen;
+    protected bool isAttacking;
+    protected bool isFrozen;
     private bool isDying;
 
     private void Start()
@@ -151,7 +150,7 @@ public class EnemyAI : MonoBehaviour
         healthBarObject.transform.LookAt(healthBarObject.transform.position + mainCamera.transform.rotation * Vector3.forward, mainCamera.transform.rotation * Vector3.up);
     }
 
-    private void ChangeState(State newState)
+    protected void ChangeState(State newState)
     {
         if (newState == state)
         {
@@ -196,10 +195,10 @@ public class EnemyAI : MonoBehaviour
     private void HandleAttacking()
     {
         agent.ResetPath();
-        StartCoroutine(TriggerAttack());
+        StartCoroutine(TriggerAttack("Attacking"));
     }
 
-    private IEnumerator TriggerAttack()
+    protected virtual IEnumerator TriggerAttack(string animString)
     {
         isAttacking = true;
         // resize the hitbox
@@ -208,11 +207,10 @@ public class EnemyAI : MonoBehaviour
         attackCollider.enabled = true;
 
         // Trigger the animation
-        animator.SetTrigger("Attacking");
-        Debug.Log("attack anim start");
+        animator.SetTrigger(animString);
 
         // get the length of the triggered animation
-        float animationLength = AnimationUtils.GetAnimationClipLength(animator, "Attacking");
+        float animationLength = AnimationUtils.GetAnimationClipLength(animator, animString);
 
         // Wait for the animation to finish
         yield return new WaitForSeconds(animationLength);
@@ -232,7 +230,6 @@ public class EnemyAI : MonoBehaviour
             // If player is within chase range but outside attack range, start walking
             stateToRevertTo = State.Walking;
         }
-        Debug.Log("state reversion");
 
         // Set state
         ChangeState(stateToRevertTo);
@@ -395,5 +392,12 @@ public class EnemyAI : MonoBehaviour
     private void Die()
     {
         Destroy(gameObject);
+    }
+
+
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, attackRange);
     }
 }
