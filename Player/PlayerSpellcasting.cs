@@ -9,13 +9,13 @@ public class PlayerSpellCasting : MonoBehaviour
     [Tooltip("Determines the y coordinate for an instantiated spell prefab. An offset to the player's y coordinate;")]
     public float spellInstantiateHeightOffset = 1.0f;
     public float aoeSpellRadius = 5f;
-    public int aoeSpellDamage = 10;
+    public int aoeSpellDamageMult = 10;
     public int aoeSpellCost = 30;
-    public int projectileSpellDamage = 10;
+    public int projectileSpellDamageMult = 1;
     public int projectileSpellCost = 10;
+    public int baseSpellDamage = 10;
 
     private PlayerStats playerStats;
-    private int manaRegenRate;
 
     private void Start()
     {
@@ -34,7 +34,10 @@ public class PlayerSpellCasting : MonoBehaviour
 
         targetDirection.Normalize();
 
-        spellInstance.GetComponent<ProjectileSpellBehavior>().Setup(targetDirection, projectileSpellDamage);
+        int currentSpellPower = playerStats.GetSpellPower();
+        int damage = CalculateSpellDamage(currentSpellPower, projectileSpellDamageMult, baseSpellDamage);
+
+        spellInstance.GetComponent<ProjectileSpellBehavior>().Setup(targetDirection, damage);
 
         playerStats.adjustMana(-projectileSpellCost);
     }
@@ -53,5 +56,10 @@ public class PlayerSpellCasting : MonoBehaviour
             }
         }
         playerStats.adjustMana(-aoeSpellCost);
+    }
+
+    private int CalculateSpellDamage(int spellPower, int spellDamageMult, int baseDamage)
+    {
+        return ((baseDamage * spellDamageMult) + (spellPower / 2));
     }
 }
