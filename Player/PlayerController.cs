@@ -12,7 +12,8 @@ public class PlayerController : MonoBehaviour
         Walking,
         Attacking,
         AttackOne,
-        AttackTwo
+        AttackTwo,
+        AttackThree
     }
 
     public State state;
@@ -23,10 +24,13 @@ public class PlayerController : MonoBehaviour
     public float projectileSpellCastAnimOffsetTime = 0.4f;
     [Tooltip("How long to wait during the casting animation before the aoe is initialized. Seconds.")]
     public float aoeSpellCastAnimOffsetTime = 0.25f;
+    [Tooltip("How long to wait during the casting animation before the blizzard area is initialized. Seconds.")]
+    public float blizzSpellCastAnimOffsetTime = 0.25f;
     public int healthPotionHealingAmount = 25;
     public int manaPotionHealingAmount = 25;
     public Image IceBoltButtonImage;
     public Image FrostNovaButtonImage;
+    public Image BlizzardButtonImage;
     public GameObject clickAnimPrefab;
 
 
@@ -128,6 +132,27 @@ public class PlayerController : MonoBehaviour
                 return;
             }
 
+            if (Input.GetButtonDown("Fire4"))
+            {
+                if (playerStats.currentMana < playerSpellCasting.aoeSpellCost)
+                {
+                    Debug.Log("Not enough mana");
+                    StartCoroutine(FlashCoroutine(1f, FrostNovaButtonImage));
+                    return;
+                }
+                if (spellCooldown)
+                {
+                    Debug.Log("CD");
+                    return;
+                }
+
+
+                agent.ResetPath();
+                state = State.AttackThree;
+                return;
+            }
+
+
             if (Input.GetButtonDown("Fire1"))
             {
                 RaycastHit hit = GetMousePositionFromRayCast();
@@ -162,6 +187,12 @@ public class PlayerController : MonoBehaviour
                 if (spellCooldown)
                     return;
                 HandleAttackTwo();
+                break;
+
+            case State.AttackThree:
+                if (spellCooldown)
+                    return;
+                HandleAttackThree();
                 break;
 
             case State.Attacking:
@@ -244,7 +275,13 @@ public class PlayerController : MonoBehaviour
     private void HandleAttackTwo()
     {
         spellCooldown = true;
-        StartCoroutine(castAoeSpell("AttackTwo", projectileSpellCastAnimOffsetTime));
+        StartCoroutine(castAoeSpell("AttackTwo", aoeSpellCastAnimOffsetTime));
+    }
+
+    private void HandleAttackThree()
+    {
+        spellCooldown = true;
+        StartCoroutine(castBlizzardSpell("AttackThree", blizzSpellCastAnimOffsetTime));
     }
 
     private void HandleAttacking()
@@ -270,6 +307,34 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(animationLength - animOffsetTime);
 
         FrostNovaButtonImage.color = Color.white;
+
+        // Set state to Idling and cooldown to false
+        state = State.Idling;
+        spellCooldown = false;
+    }
+
+    private IEnumerator castBlizzardSpell(string triggerName, float animOffsetTime)
+    {
+
+        RaycastHit mousePosHit = GetMousePositionFromRayCast();
+
+        BlizzardButtonImage.color = Color.gray;
+
+        // Trigger the animation
+        animator.SetTrigger(triggerName);
+
+        // get the length of the triggered animation
+        float animationLength = AnimationUtils.GetAnimationClipLength(animator, triggerName);
+
+        // Wait for the specified time in the animation to cast the spell.
+        yield return new WaitForSeconds(animOffsetTime);
+
+        playerSpellCasting.CastBlizzardSpell(mousePosHit.point);
+
+        // Wait for the animation to finish
+        yield return new WaitForSeconds(animationLength - animOffsetTime);
+
+        BlizzardButtonImage.color = Color.white;
 
         // Set state to Idling and cooldown to false
         state = State.Idling;
