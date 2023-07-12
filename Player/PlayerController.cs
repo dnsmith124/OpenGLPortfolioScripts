@@ -27,6 +27,7 @@ public class PlayerController : MonoBehaviour
     public int manaPotionHealingAmount = 25;
     public Image IceBoltButtonImage;
     public Image FrostNovaButtonImage;
+    public GameObject clickAnimPrefab;
 
 
     private bool canMove = true;
@@ -127,7 +128,11 @@ public class PlayerController : MonoBehaviour
                 return;
             }
 
-
+            if (Input.GetButtonDown("Fire1"))
+            {
+                RaycastHit hit = GetMousePositionFromRayCast();
+                Instantiate(clickAnimPrefab, hit.point, Quaternion.identity);
+            }
             if (Input.GetButton("Fire1"))
             {
                 RaycastHit hit = GetMousePositionFromRayCast();
