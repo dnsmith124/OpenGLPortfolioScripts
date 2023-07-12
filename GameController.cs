@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameController : MonoBehaviour
 {
@@ -9,8 +10,11 @@ public class GameController : MonoBehaviour
 
     public bool isAIEnabled;
     public bool isPaused;
+    public bool startWithTutorialInfo;
     public int gameDifficulty;
     private CanvasGroup pauseScreen;
+    private Button startButton;
+    private PlayerController playerController;
 
     public Dictionary<string, bool> conditions = new Dictionary<string, bool>();
 
@@ -40,7 +44,19 @@ public class GameController : MonoBehaviour
         InitConditions();
 
         pauseScreen = GameObject.FindGameObjectWithTag("PauseScreen").GetComponent<CanvasGroup>();
-        pauseScreen.alpha = 0;
+        startButton = GameObject.FindGameObjectWithTag("StartButton").GetComponent<Button>();
+        playerController = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
+
+        if (startWithTutorialInfo)
+        {
+            PauseGame();
+            startButton.gameObject.SetActive(true);
+        }
+        else
+        {
+            pauseScreen.alpha = 0;
+            startButton.gameObject.SetActive(true);
+        }
     }
 
     void Update()
@@ -49,13 +65,11 @@ public class GameController : MonoBehaviour
         {
             if (isPaused)
             {
-                ResumeGame();
-                pauseScreen.alpha = 0;
+                ClosePauseMenu();
             }
             else
             {
-                PauseGame();
-                pauseScreen.alpha = 1;
+                OpenPauseMenu();
             }
         }
     }
@@ -100,10 +114,29 @@ public class GameController : MonoBehaviour
         Time.timeScale = 0f;
         isPaused = true;
     }
+    public void OpenPauseMenu()
+    {
+        PauseGame();
+        pauseScreen.alpha = 1;
+        playerController.SetCanMove(false);
+        pauseScreen.interactable = true;
+        pauseScreen.blocksRaycasts = true;
+
+    }
 
     public void ResumeGame()
     {
         Time.timeScale = 1f;
         isPaused = false;
+    }
+
+    public void ClosePauseMenu()
+    {
+        startButton.gameObject.SetActive(false);
+        pauseScreen.alpha = 0;
+        playerController.SetCanMove(true);
+        pauseScreen.blocksRaycasts = false;
+        pauseScreen.interactable = false;
+        ResumeGame();
     }
 }

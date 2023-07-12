@@ -47,7 +47,6 @@ public class InventoryManager : MonoBehaviour
         isOpen = false;
         uiParent.SetActive(false);
         GameController.Instance.ResumeGame();
-        pausePanel.GetComponent<CanvasGroup>().blocksRaycasts = true;
     }
 
     public void UpdateUI()
