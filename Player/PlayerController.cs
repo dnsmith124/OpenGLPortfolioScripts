@@ -131,7 +131,8 @@ public class PlayerController : MonoBehaviour
             if (Input.GetButtonDown("Fire1"))
             {
                 RaycastHit hit = GetMousePositionFromRayCast();
-                Instantiate(clickAnimPrefab, hit.point, Quaternion.identity);
+                if(hit.collider.gameObject.CompareTag("Floor"))
+                    Instantiate(clickAnimPrefab, hit.point, Quaternion.identity);
             }
             if (Input.GetButton("Fire1"))
             {

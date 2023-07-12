@@ -43,10 +43,7 @@ public class NPCDialogue : MonoBehaviour
             if (Physics.Raycast(ray, out hit))
             {
                 if(hit.collider.gameObject.CompareTag("NPC")) {
-
-                    float distance = Vector3.Distance(gameObject.transform.position, playerObject.transform.position);
-                    if (distance > interactionDistance)
-                        hasBeenClicked = true;
+                    hasBeenClicked = true;
                 }
             }
         }
@@ -54,9 +51,15 @@ public class NPCDialogue : MonoBehaviour
 
     private void LoadDialogue(string fileName)
     {
-        string path = $"Assets/Resources/NPCDialogue/{fileName}.json";
-        string json = File.ReadAllText(path);
-        dialogueData = JsonUtility.FromJson<DialogueData>(json);
+        TextAsset dialogueAsset = Resources.Load<TextAsset>($"NPCDialogue/{fileName}");
+
+        if (dialogueAsset == null)
+        {
+            Debug.LogError($"Failed to load dialogue file: {fileName}");
+            return;
+        }
+
+        dialogueData = JsonUtility.FromJson<DialogueData>(dialogueAsset.text);
     }
 
     public DialogueData GetDialogueData()
