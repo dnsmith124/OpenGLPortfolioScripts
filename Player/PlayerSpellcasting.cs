@@ -86,7 +86,6 @@ public class PlayerSpellCasting : MonoBehaviour
 
         while (elapsed < duration)
         {
-            Debug.Log("Tick");
             Collider[] hitColliders = Physics.OverlapSphere(mousePos, blizzardSpellRadius);
 
             foreach (var hitCollider in hitColliders)
