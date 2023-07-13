@@ -134,10 +134,10 @@ public class PlayerController : MonoBehaviour
 
             if (Input.GetButtonDown("Fire4"))
             {
-                if (playerStats.currentMana < playerSpellCasting.aoeSpellCost)
+                if (playerStats.currentMana < playerSpellCasting.blizzardSpellCost)
                 {
                     Debug.Log("Not enough mana");
-                    StartCoroutine(FlashCoroutine(1f, FrostNovaButtonImage));
+                    StartCoroutine(FlashCoroutine(1f, BlizzardButtonImage));
                     return;
                 }
                 if (spellCooldown)
