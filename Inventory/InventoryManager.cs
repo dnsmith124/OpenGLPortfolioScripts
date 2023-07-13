@@ -7,6 +7,7 @@ using ModelShark;
 public class InventoryManager : MonoBehaviour
 {
     public PlayerInventory playerInventory;
+    private PlayerController playerController;
     public GameObject uiParent;
     public GameObject uiItemsPanel;
     public GameObject uiItemPrefab;
@@ -19,6 +20,7 @@ public class InventoryManager : MonoBehaviour
         uiParent.gameObject.SetActive(false);
         isOpen = false;
         playerInventory = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerInventory>();
+        playerController = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
         pausePanel = GameObject.FindGameObjectWithTag("PauseScreen");
     }
 
@@ -27,9 +29,14 @@ public class InventoryManager : MonoBehaviour
         if (Input.GetButtonDown("Inventory"))
         {
             if(!isOpen)
-                HandleOpenUI();
+            {
+                if(playerController.GetCanMove())
+                    HandleOpenUI();
+            }
             else
+            {
                 HandleCloseUI();
+            }
         }
     }
 
@@ -40,6 +47,7 @@ public class InventoryManager : MonoBehaviour
         uiParent.SetActive(true);
         GameController.Instance.PauseGame();
         pausePanel.GetComponent<CanvasGroup>().blocksRaycasts = false;
+        playerController.EnterUIMode();
     }
 
     private void HandleCloseUI()
@@ -47,6 +55,7 @@ public class InventoryManager : MonoBehaviour
         isOpen = false;
         uiParent.SetActive(false);
         GameController.Instance.ResumeGame();
+        playerController.SetCanMove(true);
     }
 
     public void UpdateUI()

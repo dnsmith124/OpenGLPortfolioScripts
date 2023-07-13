@@ -33,7 +33,6 @@ public class PlayerController : MonoBehaviour
     public Image BlizzardButtonImage;
     public GameObject clickAnimPrefab;
 
-
     private bool canMove = true;
     private bool spellCooldown = false;
     private NavMeshAgent agent;
@@ -49,7 +48,7 @@ public class PlayerController : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         agent.speed = speed;
-        agent.angularSpeed = 0; // Disable automatic rotation
+        agent.angularSpeed = 0; 
         _mainCamera = Camera.main;
         animator = GetComponent<Animator>();
         playerSpellCasting = GetComponent<PlayerSpellCasting>();
@@ -218,7 +217,7 @@ public class PlayerController : MonoBehaviour
     public void EnterUIMode()
     {
         Debug.Log("Enter UI Mode");
-        canMove = false;
+        SetCanMove(false);
         agent.ResetPath();
         state = State.Idling;
     }
@@ -226,6 +225,11 @@ public class PlayerController : MonoBehaviour
     public void SetCanMove(bool value)
     {
         canMove = value;
+    }
+
+    public bool GetCanMove()
+    {
+        return canMove;
     }
 
     private void HandleIdling()

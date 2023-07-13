@@ -10,10 +10,11 @@ public class GameController : MonoBehaviour
 
     public bool isAIEnabled;
     public bool isPaused;
+    public bool isPauseScreenOpen;
     public bool startWithTutorialInfo;
     public int gameDifficulty;
     private CanvasGroup pauseScreen;
-    private Button startButton;
+    private GameObject startText;
     private PlayerController playerController;
 
     public Dictionary<string, bool> conditions = new Dictionary<string, bool>();
@@ -44,18 +45,18 @@ public class GameController : MonoBehaviour
         InitConditions();
 
         pauseScreen = GameObject.FindGameObjectWithTag("PauseScreen").GetComponent<CanvasGroup>();
-        startButton = GameObject.FindGameObjectWithTag("StartButton").GetComponent<Button>();
+        startText = GameObject.FindGameObjectWithTag("StartButton");
         playerController = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
 
         if (startWithTutorialInfo)
         {
             PauseGame();
-            startButton.gameObject.SetActive(true);
+            startText.gameObject.SetActive(true);
         }
         else
         {
             pauseScreen.alpha = 0;
-            startButton.gameObject.SetActive(true);
+            startText.gameObject.SetActive(true);
         }
     }
 
@@ -63,13 +64,14 @@ public class GameController : MonoBehaviour
     {
         if (Input.GetButtonDown("Menu"))
         {
-            if (isPaused)
+            if (!isPauseScreenOpen)
+            {
+                if (playerController.GetCanMove())
+                    OpenPauseMenu();
+            }
+            else if(isPauseScreenOpen)
             {
                 ClosePauseMenu();
-            }
-            else
-            {
-                OpenPauseMenu();
             }
         }
     }
@@ -117,11 +119,12 @@ public class GameController : MonoBehaviour
     public void OpenPauseMenu()
     {
         PauseGame();
+        isPauseScreenOpen = true;
         pauseScreen.alpha = 1;
-        playerController.SetCanMove(false);
         pauseScreen.interactable = true;
         pauseScreen.blocksRaycasts = true;
 
+        playerController.EnterUIMode();
     }
 
     public void ResumeGame()
@@ -132,11 +135,37 @@ public class GameController : MonoBehaviour
 
     public void ClosePauseMenu()
     {
-        startButton.gameObject.SetActive(false);
-        pauseScreen.alpha = 0;
-        playerController.SetCanMove(true);
-        pauseScreen.blocksRaycasts = false;
-        pauseScreen.interactable = false;
+        StartCoroutine(FadePausePanel(false));
+        startText.SetActive(false);
         ResumeGame();
+        isPauseScreenOpen = false;
+        playerController.SetCanMove(true);
+    }
+
+    private IEnumerator FadePausePanel(bool fadeIn)
+    {
+        float elapsedTime = 0f;
+        float fadeDuration = .3f;
+
+        while (elapsedTime < fadeDuration)
+        {
+            elapsedTime += Time.deltaTime;
+
+            // If fadeIn is true, we fade in. Otherwise, we fade out
+            if (fadeIn)
+            {
+                pauseScreen.alpha = Mathf.Lerp(0, 1, elapsedTime / fadeDuration);
+            }
+            else
+            {
+                pauseScreen.alpha = Mathf.Lerp(1, 0, elapsedTime / fadeDuration);
+            }
+
+            yield return null;
+        }
+
+        // If fadeIn is true, we make the UI interactable. Otherwise, we make it non-interactable
+        pauseScreen.interactable = fadeIn;
+        pauseScreen.blocksRaycasts = fadeIn;
     }
 }
