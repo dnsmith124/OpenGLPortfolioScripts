@@ -44,11 +44,9 @@ public class ProjectileSpellBehavior : MonoBehaviour
 
     private void OnTriggerEnter(Collider col)
     {
-        // if we hit something we shouldn't, return
-        if(col.GetComponent<PlayerController>() || col.GetComponent<AttackingHitbox>() || col.GetComponent<NPCDialogue>())
-        {
+
+        if(!col.GetComponent<ReceivingHitbox>())
             return;
-        }
 
         GameObject hitFX;
         Vector3 alteredPosition = col.transform.position;

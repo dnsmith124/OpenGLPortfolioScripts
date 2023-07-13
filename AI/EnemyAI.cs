@@ -49,6 +49,7 @@ public class EnemyAI : MonoBehaviour
     protected bool isAttacking;
     protected bool isFrozen;
     private bool isDying;
+    public bool isAggroed;
 
     private void Start()
     {
@@ -82,6 +83,7 @@ public class EnemyAI : MonoBehaviour
         isAttacking = false;
         isFrozen = false;
         isDying = false;
+        isAggroed = false;
 
         freezeController = GetComponentInChildren<FreezeController>();
     }
@@ -172,6 +174,8 @@ public class EnemyAI : MonoBehaviour
             case State.TakingDamage:
                 if(!isFrozen)
                     animator.SetTrigger("Damaging");
+                if(!isAggroed)
+                    HandleUpdateAggroState();
                 break;
             case State.Frozen:
                 //animator.SetTrigger("Freezing");
@@ -183,6 +187,28 @@ public class EnemyAI : MonoBehaviour
                 animator.SetTrigger("Dying");
                 break;
         }
+    }
+
+    private void HandleUpdateAggroState()
+    {
+        float aggroSphereRadius = chaseRange / 2f;
+
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, aggroSphereRadius);
+
+        foreach (Collider col in hitColliders)
+        {
+            Debug.Log(col);
+            if (col.GetComponentInParent<EnemyAI>())
+            {
+                EnemyAI enemyAI = col.GetComponentInParent<EnemyAI>();
+                float newChaseRange = enemyAI.chaseRange * 10f;
+                enemyAI.chaseRange = newChaseRange;
+                enemyAI.isAggroed = true;
+            }
+        }
+
+        isAggroed = true;
+        chaseRange *= 10.0f;
     }
 
     private void HandleDying()
@@ -289,8 +315,6 @@ public class EnemyAI : MonoBehaviour
 
         // Check distance to player
         float distanceToTarget = Vector3.Distance(target.position, transform.position);
-
-        chaseRange *= 10.0f;
 
         State stateToRevertTo = State.Idling;
         if (distanceToTarget <= chaseRange && distanceToTarget > attackRange)
@@ -399,5 +423,9 @@ public class EnemyAI : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, chaseRange);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, chaseRange / 2f);
     }
 }
