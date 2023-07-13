@@ -218,7 +218,8 @@ public class PlayerController : MonoBehaviour
     {
         Debug.Log("Enter UI Mode");
         SetCanMove(false);
-        agent.ResetPath();
+        if(agent)
+            agent.ResetPath();
         state = State.Idling;
     }
 

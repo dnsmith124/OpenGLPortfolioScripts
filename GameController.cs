@@ -50,7 +50,7 @@ public class GameController : MonoBehaviour
 
         if (startWithTutorialInfo)
         {
-            PauseGame();
+            OpenPauseMenu();
             startText.gameObject.SetActive(true);
         }
         else
