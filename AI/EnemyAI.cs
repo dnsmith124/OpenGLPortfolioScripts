@@ -124,7 +124,7 @@ public class EnemyAI : MonoBehaviour
                     break;
 
                 case State.Attacking:
-                    if (!isAttacking)
+                    if (!isAttacking && !isFrozen)
                         HandleAttacking();
                     break;
 
@@ -371,13 +371,13 @@ public class EnemyAI : MonoBehaviour
     {
         agent.ResetPath();
         attackingHitbox.KillAttackingCoroutine(false);
+        attackCollider.enabled = false;
         StartCoroutine(TriggerFrozen(time));
     }
 
     private IEnumerator TriggerFrozen(float time)
     {
         isFrozen = true;
-
         freezeController.AssignFrozenMaterial();
         float initialSpeed = animator.speed;
         animator.speed = 0;
