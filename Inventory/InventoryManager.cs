@@ -74,7 +74,6 @@ public class InventoryManager : MonoBehaviour
 
             DragDropItem dragDropItem = uiItem.AddComponent<DragDropItem>();
             dragDropItem.RepresentedItem = item;
-            Debug.Log(dragDropItem.RepresentedItem);
 
             // Set image from itemImage
             Image[] uiImages = uiItem.GetComponentsInChildren<Image>();
@@ -114,19 +113,19 @@ public class InventoryManager : MonoBehaviour
 
         if (item.healthBoost > 0)
         {
-            boostText += $"Health +{item.healthBoost}";
+            boostText += $"Health +{item.healthBoost} ";
         }
         if (item.manaBoost > 0)
         {
-            boostText += $"Mana +{item.manaBoost}";
+            boostText += $"Mana +{item.manaBoost} ";
         }
         if (item.spellPowerBoost > 0)
         {
-            boostText += $"Spell Power +{item.spellPowerBoost}";
+            boostText += $"Spell Power +{item.spellPowerBoost} ";
         }
         if (item.charmBoost > 0)
         {
-            boostText += $"Charm +{item.charmBoost}";
+            boostText += $"Charm +{item.charmBoost} ";
         }
 
         return boostText;

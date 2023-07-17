@@ -15,6 +15,7 @@ public class GameController : MonoBehaviour
     public int gameDifficulty;
     private CanvasGroup pauseScreen;
     private GameObject startText;
+    private GameObject pausedScreenData;
     private PlayerController playerController;
 
     public Dictionary<string, bool> conditions = new Dictionary<string, bool>();
@@ -30,11 +31,9 @@ public class GameController : MonoBehaviour
 
     private void Awake()
     {
-        // Ensure there is only one instance of this class
         if (Instance == null)
         {
             Instance = this;
-            // This ensures that your GameManager is not destroyed when changing scenes.
             DontDestroyOnLoad(gameObject);
         }
         else
@@ -45,18 +44,21 @@ public class GameController : MonoBehaviour
         InitConditions();
 
         pauseScreen = GameObject.FindGameObjectWithTag("PauseScreen").GetComponent<CanvasGroup>();
+        pausedScreenData = GameObject.FindGameObjectWithTag("PausedScreenData");
         startText = GameObject.FindGameObjectWithTag("StartButton");
         playerController = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
 
         if (startWithTutorialInfo)
         {
             OpenPauseMenu();
-            startText.gameObject.SetActive(true);
+            startText.SetActive(true);
+            pausedScreenData.SetActive(false);
         }
         else
         {
             pauseScreen.alpha = 0;
             startText.gameObject.SetActive(true);
+            pausedScreenData.SetActive(true);
         }
     }
 
@@ -79,6 +81,8 @@ public class GameController : MonoBehaviour
     private void InitConditions()
     {
         conditions.Add("hasKey", false);
+        conditions.Add("beatBoss", false);
+        conditions.Add("bossLives", true);
     }
 
     public void EnableAI()
@@ -137,6 +141,7 @@ public class GameController : MonoBehaviour
     {
         StartCoroutine(FadePausePanel(false));
         startText.SetActive(false);
+        pausedScreenData.SetActive(true);
         ResumeGame();
         isPauseScreenOpen = false;
         playerController.SetCanMove(true);

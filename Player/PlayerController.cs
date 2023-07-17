@@ -79,7 +79,6 @@ public class PlayerController : MonoBehaviour
                 {
                     playerInventory.adjustManaPotionCount(-1);
                     playerStats.adjustMana(manaPotionHealingAmount);
-                    // play health potion sound
                 }
                 else
                 {
@@ -91,13 +90,11 @@ public class PlayerController : MonoBehaviour
             {
                 if (playerStats.currentMana < playerSpellCasting.projectileSpellCost)
                 {
-                    Debug.Log("Not enough mana");
                     StartCoroutine(FlashCoroutine(1f, IceBoltButtonImage));
                     return;
                 }
                 if (spellCooldown)
                 {
-                    Debug.Log("CD");
                     return;
                 }
 
@@ -115,13 +112,11 @@ public class PlayerController : MonoBehaviour
             {
                 if (playerStats.currentMana < playerSpellCasting.aoeSpellCost)
                 {
-                    Debug.Log("Not enough mana");
                     StartCoroutine(FlashCoroutine(1f, FrostNovaButtonImage));
                     return;
                 }
                 if (spellCooldown)
                 {
-                    Debug.Log("CD");
                     return;
                 }
 
@@ -135,13 +130,11 @@ public class PlayerController : MonoBehaviour
             {
                 if (playerStats.currentMana < playerSpellCasting.blizzardSpellCost)
                 {
-                    Debug.Log("Not enough mana");
                     StartCoroutine(FlashCoroutine(1f, BlizzardButtonImage));
                     return;
                 }
                 if (spellCooldown)
                 {
-                    Debug.Log("CD");
                     return;
                 }
 

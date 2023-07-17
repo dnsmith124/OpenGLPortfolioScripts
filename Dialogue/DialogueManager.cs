@@ -149,10 +149,16 @@ public class DialogueManager : MonoBehaviour
                 {
                     // overwrite default text if failText exists
                     if (currentNode.Options[i].FailText != null)
+                    {
                         buttonText = currentNode.Options[i].FailText;
+                        button.colors = conditionNotMetColorBlock;
+                        button.interactable = false;
+                    } else
+                    {
+                        button.gameObject.SetActive(false);
+                        continue;
+                    }
 
-                    button.colors = conditionNotMetColorBlock;
-                    button.interactable = false;
                 }
 
                 // if it has a condition, and the condition is 2 parts (i.e. has a value beyond true/false), add that to the text

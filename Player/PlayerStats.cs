@@ -25,6 +25,8 @@ public class PlayerStats : MonoBehaviour
     public Slider manaSlider;
     public StatsPanelManager statsPanelManager;
     private PlayerInventory playerInventory;
+    private ScreenDamage screenDamage;
+    private Vector3 startPoint;
 
     void Start()
     {
@@ -39,6 +41,8 @@ public class PlayerStats : MonoBehaviour
 
         playerInventory = GetComponent<PlayerInventory>();
         statsPanelManager.setStatCounts(maxHealth, maxMana, spellPower, Charm);
+        screenDamage = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<ScreenDamage>();
+        startPoint = GameObject.FindGameObjectWithTag("StartPoint").transform.position;
     }
 
     private void Update()
@@ -62,7 +66,8 @@ public class PlayerStats : MonoBehaviour
         }
         if(currentHealth <= 0)
         {
-            // Die
+            gameObject.transform.position = startPoint;
+            StartCoroutine(WaitThenResetHealth());
         }
     }
 
@@ -74,6 +79,7 @@ public class PlayerStats : MonoBehaviour
     public void adjustHealth(int value)
     {
         currentHealth += value;
+        screenDamage.CurrentHealth = currentHealth;
     }
 
     public void adjustMana(int value)
@@ -121,6 +127,16 @@ public class PlayerStats : MonoBehaviour
         manaSlider.maxValue = maxMana;
 
         statsPanelManager.setStatCounts(maxHealth, maxMana, spellPower, Charm);
+
+        screenDamage.CurrentHealth = (float)currentHealth;
+        screenDamage.maxHealth = (float)maxHealth;
+    }
+
+    private IEnumerator WaitThenResetHealth()
+    {
+        yield return new WaitForSeconds(2f);
+        currentHealth = maxHealth;
+        screenDamage.CurrentHealth = currentHealth;
     }
 
 }

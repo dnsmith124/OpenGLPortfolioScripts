@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
 using System.Collections;
+using DamageNumbersPro;
 
 public class EnemyAI : MonoBehaviour
 {
@@ -29,14 +30,16 @@ public class EnemyAI : MonoBehaviour
     private int currentHealth;
     public int maxHealth = 100;
     public Slider healthBar;
-    private GameObject healthBarObject;
+    protected GameObject healthBarObject;
+    public DamageNumber numberPrefab;
+    public RectTransform rectParent;
 
-    private NavMeshAgent agent;
+    protected NavMeshAgent agent;
     protected Animator animator;
     private Camera mainCamera;
-    private CapsuleCollider attackCollider;
-    private AttackingHitbox attackingHitbox;
-    private CapsuleCollider receivingCollider;
+    protected CapsuleCollider attackCollider;
+    protected AttackingHitbox attackingHitbox;
+    protected CapsuleCollider receivingCollider;
     private ReceivingHitbox receivingHitbox;
     private float initialColliderRadius;
 
@@ -44,7 +47,7 @@ public class EnemyAI : MonoBehaviour
     private FreezeController freezeController;
     private State preFrozenState;
 
-    private DropManager dropManager;
+    protected DropManager dropManager;
 
     protected bool isAttacking;
     protected bool isFrozen;
@@ -99,7 +102,6 @@ public class EnemyAI : MonoBehaviour
         if (GameController.Instance.isAIEnabled)
         {
             float distanceToTarget = Vector3.Distance(target.position, transform.position);
-            //Debug.Log(state);
             switch (state)
             {
                 case State.Idling:
@@ -146,7 +148,7 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    private void LateUpdate()
+    protected virtual void LateUpdate()
     {
         // Make the health bar face the camera
         healthBarObject.transform.LookAt(healthBarObject.transform.position + mainCamera.transform.rotation * Vector3.forward, mainCamera.transform.rotation * Vector3.up);
@@ -158,8 +160,6 @@ public class EnemyAI : MonoBehaviour
         {
             return;
         }
-
-        Debug.Log(newState);
 
         state = newState;
 
@@ -197,7 +197,6 @@ public class EnemyAI : MonoBehaviour
 
         foreach (Collider col in hitColliders)
         {
-            Debug.Log(col);
             if (col.GetComponentInParent<EnemyAI>())
             {
                 EnemyAI enemyAI = col.GetComponentInParent<EnemyAI>();
@@ -263,7 +262,7 @@ public class EnemyAI : MonoBehaviour
 
     }
 
-    private void HandleIdling(float distanceToTarget)
+    protected virtual void HandleIdling(float distanceToTarget)
     {
         if (distanceToTarget <= chaseRange && distanceToTarget > attackRange)
         {
@@ -277,7 +276,7 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    private void HandleWalking(float distanceToTarget)
+    protected virtual void HandleWalking(float distanceToTarget)
     {
         if (distanceToTarget <= attackRange)
         {
@@ -292,18 +291,16 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        //Debug.Log("setting destination");
-
         agent.SetDestination(target.position);
     }
 
-    private void HandleTakingDamage()
+    protected virtual void HandleTakingDamage()
     {
         agent.ResetPath();
         StartCoroutine(TriggerDamage());
     }
 
-    private IEnumerator TriggerDamage()
+    protected virtual IEnumerator TriggerDamage()
     {
         // animation triggered in ChangeState above
 
@@ -340,6 +337,8 @@ public class EnemyAI : MonoBehaviour
 
         currentHealth -= damage;
         healthBar.value = currentHealth;
+        Vector3 damageNumberOffset = new Vector3(0, 1, 0);
+        DamageNumber damageNumber = numberPrefab.Spawn(transform.position + damageNumberOffset, damage);
 
         if (currentHealth < maxHealth)
         {
@@ -358,7 +357,6 @@ public class EnemyAI : MonoBehaviour
 
     public void Freeze(float time)
     {
-        Debug.Log("Freeze");
         attackingHitbox.KillAttackingCoroutine(false);
         frozenTime = time;
         preFrozenState = state;
@@ -383,12 +381,11 @@ public class EnemyAI : MonoBehaviour
         yield return new WaitForSeconds(time);
         freezeController.RevertMaterial();
         ChangeState(preFrozenState);
-        Debug.Log($"Revert to state {preFrozenState}");
         isFrozen = false;
         animator.speed = initialSpeed;
     }
 
-    private IEnumerator TriggerDyingAnimAndCleanup()
+    protected virtual IEnumerator TriggerDyingAnimAndCleanup()
     {
         attackCollider.enabled = false;
         receivingCollider.enabled = false;
@@ -413,7 +410,7 @@ public class EnemyAI : MonoBehaviour
         Die();
     }
 
-    private void Die()
+    protected void Die()
     {
         Destroy(gameObject);
     }
