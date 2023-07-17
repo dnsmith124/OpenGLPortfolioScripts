@@ -148,7 +148,7 @@ public class PlayerController : MonoBehaviour
             if (Input.GetButtonDown("Fire1"))
             {
                 RaycastHit hit = GetMousePositionFromRayCast();
-                if(hit.collider.gameObject.CompareTag("Floor"))
+                if(IsPointOnNavMesh(hit.point))
                     Instantiate(clickAnimPrefab, hit.point, Quaternion.identity);
             }
             if (Input.GetButton("Fire1"))
@@ -209,7 +209,6 @@ public class PlayerController : MonoBehaviour
 
     public void EnterUIMode()
     {
-        Debug.Log("Enter UI Mode");
         SetCanMove(false);
         if(agent)
             agent.ResetPath();
@@ -393,6 +392,21 @@ public class PlayerController : MonoBehaviour
                 image.color = Color.Lerp(Color.red, Color.white, t);
                 yield return null;
             }
+        }
+    }
+
+    private bool IsPointOnNavMesh(Vector3 point)
+    {
+        NavMeshHit navMeshHit;
+
+        // Check for nearest point on NavMesh within range
+        if (NavMesh.SamplePosition(point, out navMeshHit, 1f, NavMesh.AllAreas))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 }

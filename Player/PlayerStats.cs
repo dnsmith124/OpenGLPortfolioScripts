@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.UI;
 
 public class PlayerStats : MonoBehaviour
@@ -27,6 +28,7 @@ public class PlayerStats : MonoBehaviour
     private PlayerInventory playerInventory;
     private ScreenDamage screenDamage;
     private Vector3 startPoint;
+    private NavMeshAgent agent;
 
     void Start()
     {
@@ -43,6 +45,7 @@ public class PlayerStats : MonoBehaviour
         statsPanelManager.setStatCounts(maxHealth, maxMana, spellPower, Charm);
         screenDamage = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<ScreenDamage>();
         startPoint = GameObject.FindGameObjectWithTag("StartPoint").transform.position;
+        agent = GetComponent<NavMeshAgent>();
     }
 
     private void Update()
@@ -66,7 +69,6 @@ public class PlayerStats : MonoBehaviour
         }
         if(currentHealth <= 0)
         {
-            gameObject.transform.position = startPoint;
             StartCoroutine(WaitThenResetHealth());
         }
     }
@@ -134,6 +136,8 @@ public class PlayerStats : MonoBehaviour
 
     private IEnumerator WaitThenResetHealth()
     {
+        agent.Warp(startPoint);
+        agent.SetDestination(startPoint);
         yield return new WaitForSeconds(2f);
         currentHealth = maxHealth;
         screenDamage.CurrentHealth = currentHealth;

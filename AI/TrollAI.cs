@@ -4,6 +4,11 @@ using UnityEngine;
 
 public class TrollAI : EnemyAI
 {
+    public GameObject healthBarParent;
+    public GameObject cage;
+    public GameCompleteScreen gameCompleteScreen;
+    public float withstandStaggerChance;
+
     private const string attackOneTriggerName = "Attacking";
     private const string attackTwoTriggerName = "AttackingTwo";
     private const string attackThreeTriggerName = "AttackingThree";
@@ -12,9 +17,6 @@ public class TrollAI : EnemyAI
     private bool hasShouted = false;
     private bool coroutinePlaying = true;
     private GameController gameController;
-    public GameObject healthBarParent;
-    public GameObject cage;
-    public GameCompleteScreen gameCompleteScreen;
 
     private void Awake()
     {
@@ -53,11 +55,51 @@ public class TrollAI : EnemyAI
             StartCoroutine(TriggerDamage());
     }
 
-    protected override IEnumerator TriggerAttack(string animString)
+    protected override void ChangeState(State newState)
     {
+        if (newState == state)
+        {
+            return;
+        }
+
+        state = newState;
+
+        switch (state)
+        {
+            case State.Idling:
+                animator.SetTrigger("Idling");
+                break;
+            case State.Walking:
+                animator.SetTrigger("Walking");
+                break;
+            case State.TakingDamage:
+                float takeHit = Random.Range(0f, 1f);
+                if (!hasShouted || (!isFrozen && takeHit > withstandStaggerChance))
+                    animator.SetTrigger("Damaging");
+                else
+                    ChangeState(State.Idling);
+                if (!isAggroed)
+                    HandleUpdateAggroState();
+                break;
+            case State.Frozen:
+                //animator.SetTrigger("Freezing");
+                break;
+            case State.Attacking:
+                //animator trigger handled in HandleAttacking()=>TriggerAttack()
+                break;
+            case State.Dying:
+                animator.SetTrigger("Dying");
+                break;
+        }
+    }
+
+    protected override void HandleAttacking()
+    {
+        agent.ResetPath();
         string upcomingAnim = attackOneTriggerName;
-        switch (prevAnimUsed) { 
-        
+        switch (prevAnimUsed)
+        {
+
             case attackOneTriggerName:
                 upcomingAnim = attackTwoTriggerName;
                 break;
@@ -75,8 +117,34 @@ public class TrollAI : EnemyAI
 
         prevAnimUsed = upcomingAnim;
         numAttacks++;
-        return base.TriggerAttack(upcomingAnim);
+        StartCoroutine(TriggerAttack(upcomingAnim));
     }
+
+    //protected override IEnumerator TriggerAttack(string animString)
+    //{
+    //    string upcomingAnim = attackOneTriggerName;
+    //    switch (prevAnimUsed) { 
+        
+    //        case attackOneTriggerName:
+    //            upcomingAnim = attackTwoTriggerName;
+    //            break;
+    //        case attackTwoTriggerName:
+    //            upcomingAnim = attackOneTriggerName;
+    //            break;
+    //        case attackThreeTriggerName:
+    //            upcomingAnim = attackOneTriggerName;
+    //            break;
+    //        default:
+    //            break;
+    //    }
+    //    if (numAttacks > 1 && Random.value <= 0.30f)
+    //        upcomingAnim = attackThreeTriggerName;
+
+    //    prevAnimUsed = upcomingAnim;
+    //    numAttacks++;
+    //    Debug.Log("Trigger Attack");
+    //    return base.TriggerAttack(upcomingAnim);
+    //}
 
     protected override void LateUpdate ()
     {

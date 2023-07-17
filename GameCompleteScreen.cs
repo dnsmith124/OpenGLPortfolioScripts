@@ -7,6 +7,7 @@ public class GameCompleteScreen : MonoBehaviour
     public static GameCompleteScreen Instance { get; private set; }
 
     public float fadeDuration = 1f;
+    public float lingerDuration = 5f;
 
     private void Awake()
     {
@@ -47,7 +48,7 @@ public class GameCompleteScreen : MonoBehaviour
         }
         canvasGroup.alpha = 1f;
 
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(lingerDuration);
 
         elapsedTime = 0f;
         while (elapsedTime < fadeDuration)

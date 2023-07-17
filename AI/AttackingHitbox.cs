@@ -64,7 +64,6 @@ public class AttackingHitbox : MonoBehaviour
 
     private IEnumerator DealDamageAfterDelay(float delay)
     {
-
         yield return new WaitForSeconds(delay);
 
         // If the player is still within range (plus a little leeway, apply damage)
