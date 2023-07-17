@@ -50,7 +50,6 @@ public class PlayerInventory : MonoBehaviour
         }
         goldCount += amount;
         goldInvCount.text = goldCount.ToString();
-        Debug.Log($"New gold count: {goldCount}");
     }
 
     public int getGoldCount()

@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class EnemyPackInit : MonoBehaviour
 {
-    public float initializationRadius = 20.0f;
+    public float initializationRadius = 30.0f;
     private List<GameObject> enemies;
     private SphereCollider sphereCollider;
 
@@ -24,7 +24,6 @@ public class EnemyPackInit : MonoBehaviour
 
         if(col.GetComponent<PlayerController>())
         {
-            Debug.Log("Player entered");
             foreach (GameObject enemy in enemies)
             {
                 enemy.SetActive(true); 
