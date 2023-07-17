@@ -209,7 +209,6 @@ public class PlayerController : MonoBehaviour
 
     public void EnterUIMode()
     {
-        Debug.Log("Enter UI Mode");
         SetCanMove(false);
         if(agent)
             agent.ResetPath();

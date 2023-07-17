@@ -26,7 +26,8 @@ public class EnemyPackInit : MonoBehaviour
         {
             foreach (GameObject enemy in enemies)
             {
-                enemy.SetActive(true); 
+                if(enemy != null)
+                    enemy.SetActive(true); 
             }
         }
     }

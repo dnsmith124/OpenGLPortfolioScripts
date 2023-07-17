@@ -64,9 +64,9 @@ public class AttackingHitbox : MonoBehaviour
 
     private IEnumerator DealDamageAfterDelay(float delay)
     {
-
         yield return new WaitForSeconds(delay);
 
+        Debug.Log("Damage");
         // If the player is still within range (plus a little leeway, apply damage)
         if (Vector3.Distance(target.position, transform.position) <= attackRange + 0.25f)
         {

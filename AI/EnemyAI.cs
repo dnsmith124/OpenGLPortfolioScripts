@@ -154,7 +154,7 @@ public class EnemyAI : MonoBehaviour
         healthBarObject.transform.LookAt(healthBarObject.transform.position + mainCamera.transform.rotation * Vector3.forward, mainCamera.transform.rotation * Vector3.up);
     }
 
-    protected void ChangeState(State newState)
+    protected virtual void ChangeState(State newState)
     {
         if (newState == state)
         {
@@ -189,7 +189,7 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    private void HandleUpdateAggroState()
+    protected void HandleUpdateAggroState()
     {
         float aggroSphereRadius = chaseRange / 2f;
 
@@ -213,11 +213,14 @@ public class EnemyAI : MonoBehaviour
     private void HandleDying()
     {
         agent.ResetPath();
+        agent.speed = 0;
+        attackingHitbox.KillAttackingCoroutine(true);
+        attackingHitbox.gameObject.SetActive(false);
         isDying = true;
         StartCoroutine(TriggerDyingAnimAndCleanup());
     }
 
-    private void HandleAttacking()
+    protected virtual void HandleAttacking()
     {
         agent.ResetPath();
         StartCoroutine(TriggerAttack("Attacking"));
@@ -338,7 +341,7 @@ public class EnemyAI : MonoBehaviour
         currentHealth -= damage;
         healthBar.value = currentHealth;
         Vector3 damageNumberOffset = new Vector3(0, 1, 0);
-        DamageNumber damageNumber = numberPrefab.Spawn(transform.position + damageNumberOffset, damage);
+        numberPrefab.Spawn(transform.position + damageNumberOffset, damage);
 
         if (currentHealth < maxHealth)
         {
