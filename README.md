@@ -2,15 +2,15 @@
 
 ## Project Status
 
-This project is currently in development. My portfolio site has a normal, flat site for browsing examples of my work, but also will feature an interactive version that takes the form of a short action roleplaying game in the style of Blizzard Entertainment's Diablo. These scripts run the features of that game. 
+My portfolio site has a normal, flat site for browsing examples of my work, but also features an interactive version that takes the form of a short action roleplaying game in the style of Blizzard Entertainment's Diablo. These scripts run the features of that game. 
 
 ## Feature Roadmap
 
 
-- [ ] Player inventory/items
-- [ ] Final boss battle
-- [ ] Updated environments
-- [ ] Portfolio details
+- [x] Player inventory/items
+- [x] Final boss battle
+- [x] Updated environments
+- [x] Portfolio details
 - [x] Player stats
 - [x] Enemy spells/attacks
 - [x] Slain enemies drop loot
